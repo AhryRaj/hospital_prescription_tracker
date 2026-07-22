@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# AI tools & virtualenv
+.agents/
+.claude/
+.windsurf/
+venv/

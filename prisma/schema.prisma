@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Drug {
+  id              Int            @id @default(autoincrement())
+  name            String
+  category        String
+  size_amount     Float
+  size_unit       String         // e.g., 'ml', 'g', 'Qty'
+  unit_price      Float
+  frequency       Int            @default(3)
+  days            Int            @default(5)
+  prescriptions   Prescription[]
+}
+
+model Prescription {
+  id              Int      @id @default(autoincrement())
+  date            DateTime @db.Date
+  patient_id      String
+  drug_id         Int
+  drug            Drug     @relation(fields: [drug_id], references: [id])
+  dose            Float
+  total_qty       Float
+  total_cost      Float
+  created_at      DateTime @default(now())
+}
