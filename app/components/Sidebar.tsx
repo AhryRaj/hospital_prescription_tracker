@@ -155,14 +155,15 @@ export function Sidebar() {
         <button
           onClick={handleLogout}
           disabled={loggingOut}
-          className="text-white/70 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
-          title="Sign Out"
+          className="flex items-center gap-1.5 text-white/90 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/10 text-xs font-bold bg-white/10 border border-white/20 cursor-pointer"
+          title="Exit / Sign Out"
         >
           {loggingOut ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
           )}
+          <span>Exit</span>
         </button>
       </div>
 

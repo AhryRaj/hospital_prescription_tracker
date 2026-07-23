@@ -342,12 +342,25 @@ function SummariesContent() {
             Loading expenditure summaries...
           </div>
         ) : !data || totalSummaries.length === 0 ? (
-          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-500">
-            <Calendar className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-            <p className="font-bold text-base">No expenditure records found</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Issue new prescriptions to generate daily, weekly, and monthly expenditure summaries.
-            </p>
+          <div className="flex-1 bg-white p-12 sm:p-16 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center text-center my-auto min-h-[420px] space-y-5">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200/80 shadow-2xs flex items-center justify-center">
+              <BarChart3 className="w-8 h-8" />
+            </div>
+            
+            <div className="space-y-1.5 max-w-md">
+              <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">No Expenditure Records Found</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                There are no patient prescriptions recorded yet for this hospital. Issue new prescriptions to generate daily, weekly, and monthly expenditure reports automatically.
+              </p>
+            </div>
+
+            <a
+              href="/prescribe"
+              className="inline-flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              <Sprout className="w-4 h-4" />
+              <span>Issue First Prescription</span>
+            </a>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch flex-1">

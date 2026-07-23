@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { 
-  PlusCircle, 
-  Pill, 
-  CheckCircle2, 
+import {
+  PlusCircle,
+  Pill,
+  CheckCircle2,
   AlertCircle,
   Calendar,
   User,
@@ -42,7 +42,7 @@ export default function PrescribePage() {
   const [prescriptionDate, setPrescriptionDate] = useState<string>(todayStr)
   const [patientId, setPatientId] = useState('')
   const [selectedDrugId, setSelectedDrugId] = useState<number | ''>('')
-  
+
   // Basket state for multi-drug prescription
   const [basket, setBasket] = useState<BasketItem[]>([])
   const [customQty, setCustomQty] = useState<number | string>('')
@@ -277,7 +277,7 @@ export default function PrescribePage() {
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-emerald-600" />
-                <span>1. Patient & Date Details</span>
+                <span>1. Patient & Visit Info</span>
               </h2>
               <span className="text-xs text-slate-400 font-medium">* Required fields</span>
             </div>
@@ -316,9 +316,9 @@ export default function PrescribePage() {
 
             {/* Row 2: Select & Add Drug into Basket */}
             <div className="pt-2 border-t border-slate-100 space-y-4">
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Leaf className="w-4 h-4 text-emerald-600" />
-                <span>2. Select Herbal Medicine from Catalog</span>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Leaf className="w-5 h-5 text-emerald-600" />
+                <span>2. Medicine & Dosage</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">

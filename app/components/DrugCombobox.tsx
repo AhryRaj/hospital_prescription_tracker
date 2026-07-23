@@ -29,7 +29,7 @@ export function DrugCombobox({
   onSelect,
   placeholder = 'Search or select drug from catalog...',
   includeAllOption = false,
-  allOptionLabel = 'Whole Hospital Total (All Drugs)',
+  allOptionLabel = 'All Medicines (Complete Catalog)',
   compact = false,
 }: DrugComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -90,7 +90,7 @@ export function DrugCombobox({
             /* Compact single-line label for filter toolbars & sidebar */
             <span className="font-bold text-slate-900 truncate text-[11px]">
               {isAllSelected ? (
-                `🏥 Whole Hospital`
+                `🌿 All Medicines`
               ) : selectedDrug ? (
                 `🌿 ${selectedDrug.name}`
               ) : (
@@ -172,8 +172,8 @@ export function DrugCombobox({
                 <div className="flex items-center gap-2">
                   <span className="text-xs">🏥</span>
                   <div>
-                    <div className="font-bold text-xs text-slate-900">Whole Hospital Total</div>
-                    <div className="text-[10px] text-slate-500 font-medium">All drugs aggregated</div>
+                    <div className="font-bold text-xs text-slate-900">All Medicines</div>
+                    <div className="text-[10px] text-slate-500 font-medium">Complete catalog aggregated</div>
                   </div>
                 </div>
 

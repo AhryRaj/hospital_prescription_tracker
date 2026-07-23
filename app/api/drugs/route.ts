@@ -102,35 +102,49 @@ export async function DELETE(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const singleId = searchParams.get('id')
+    const idsParam = searchParams.get('ids')
 
-    if (!id) {
-      return NextResponse.json({ error: 'Drug ID is required' }, { status: 400 })
+    let idsToDelete: number[] = []
+
+    if (singleId) {
+      idsToDelete = [Number(singleId)]
+    } else if (idsParam) {
+      idsToDelete = idsParam.split(',').map((id) => Number(id)).filter((n) => !isNaN(n))
+    } else {
+      try {
+        const body = await request.json()
+        if (Array.isArray(body?.ids)) {
+          idsToDelete = body.ids.map((id: any) => Number(id)).filter((n: number) => !isNaN(n))
+        }
+      } catch {}
     }
 
-    const drugId = Number(id)
-
-    // Verify the drug belongs to this hospital
-    const existing = await prisma.drug.findFirst({
-      where: { id: drugId, hospital_id: session.hospitalId },
-    })
-    if (!existing) {
-      return NextResponse.json({ error: 'Drug not found' }, { status: 404 })
+    if (idsToDelete.length === 0) {
+      return NextResponse.json({ error: 'No valid drug IDs provided for deletion' }, { status: 400 })
     }
 
-    // Delete associated prescriptions first to prevent foreign key errors
-    await prisma.prescription.deleteMany({
-      where: { drug_id: drugId, hospital_id: session.hospitalId },
+    // Execute in transaction: delete associated prescriptions first, then delete drugs
+    const count = await prisma.$transaction(async (tx) => {
+      await tx.prescription.deleteMany({
+        where: {
+          drug_id: { in: idsToDelete },
+          hospital_id: session.hospitalId,
+        },
+      })
+
+      const res = await tx.drug.deleteMany({
+        where: {
+          id: { in: idsToDelete },
+          hospital_id: session.hospitalId,
+        },
+      })
+      return res.count
     })
 
-    // Delete the drug
-    await prisma.drug.delete({
-      where: { id: drugId },
-    })
-
-    return NextResponse.json({ success: true, message: 'Drug deleted successfully' })
-  } catch (error) {
-    console.error('Error deleting drug:', error)
-    return NextResponse.json({ error: 'Failed to delete drug' }, { status: 500 })
+    return NextResponse.json({ success: true, count, message: `${count} medicines deleted successfully` })
+  } catch (error: any) {
+    console.error('Error deleting drugs:', error)
+    return NextResponse.json({ error: error.message || 'Failed to delete drugs' }, { status: 500 })
   }
 }

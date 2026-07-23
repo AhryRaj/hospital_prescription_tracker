@@ -138,60 +138,60 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Stats Grid (2x2 on Mobile, 4-col on Tablet & Desktop) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
-        <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-            <span>Expenditure</span>
-            <div className="p-1.5 sm:p-2.5 bg-emerald-50 text-emerald-700 rounded-lg sm:rounded-xl border border-emerald-100">
+      {/* KPI Stats Grid (2x2 on Mobile & Tablet, 4-col on Desktop) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider gap-1">
+            <span className="truncate min-w-0">Expenditure</span>
+            <div className="p-1.5 sm:p-2.5 bg-emerald-50 text-emerald-700 rounded-lg sm:rounded-xl border border-emerald-100 shrink-0">
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
           <div className="mt-2 sm:mt-4">
-            <div className="text-base sm:text-2xl font-black text-slate-900">
+            <div className="text-base sm:text-2xl font-black text-slate-900 truncate">
               LKR {totalExpenditure.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
             <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1 font-medium truncate">Total hospital cost</p>
           </div>
         </div>
 
-        <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-            <span>Prescriptions</span>
-            <div className="p-1.5 sm:p-2.5 bg-teal-50 text-teal-700 rounded-lg sm:rounded-xl border border-teal-100">
+        <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider gap-1">
+            <span className="truncate min-w-0">Prescriptions</span>
+            <div className="p-1.5 sm:p-2.5 bg-teal-50 text-teal-700 rounded-lg sm:rounded-xl border border-teal-100 shrink-0">
               <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
           <div className="mt-2 sm:mt-4">
-            <div className="text-base sm:text-2xl font-black text-slate-900">{totalPrescriptions}</div>
+            <div className="text-base sm:text-2xl font-black text-slate-900 truncate">{totalPrescriptions}</div>
             <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1 font-medium truncate">Patient transactions</p>
           </div>
         </div>
 
-        <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-            <span>Avg / Patient</span>
-            <div className="p-1.5 sm:p-2.5 bg-amber-50 text-amber-700 rounded-lg sm:rounded-xl border border-amber-100">
+        <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider gap-1">
+            <span className="truncate min-w-0">Avg / Patient</span>
+            <div className="p-1.5 sm:p-2.5 bg-amber-50 text-amber-700 rounded-lg sm:rounded-xl border border-amber-100 shrink-0">
               <Users className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
           <div className="mt-2 sm:mt-4">
-            <div className="text-base sm:text-2xl font-black text-slate-900">
+            <div className="text-base sm:text-2xl font-black text-slate-900 truncate">
               LKR {avgCostPerPrescription.toFixed(2)}
             </div>
             <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1 font-medium truncate">Average cost</p>
           </div>
         </div>
 
-        <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-            <span>Medicines</span>
-            <div className="p-1.5 sm:p-2.5 bg-emerald-50 text-emerald-700 rounded-lg sm:rounded-xl border border-emerald-100">
+        <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider gap-1">
+            <span className="truncate min-w-0">Medicines</span>
+            <div className="p-1.5 sm:p-2.5 bg-emerald-50 text-emerald-700 rounded-lg sm:rounded-xl border border-emerald-100 shrink-0">
               <Pill className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
           <div className="mt-2 sm:mt-4">
-            <div className="text-base sm:text-2xl font-black text-slate-900">{drugs.length}</div>
+            <div className="text-base sm:text-2xl font-black text-slate-900 truncate">{drugs.length}</div>
             <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1 font-medium truncate">Herbal preparations</p>
           </div>
         </div>
