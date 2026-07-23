@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { signToken, createAuthCookie } from '@/lib/auth'
 
 export async function GET(request: Request) {
   try {
@@ -32,17 +33,40 @@ export async function GET(request: Request) {
       )
     }
 
-    // Mark user as verified
-    await prisma.user.update({
+    // Mark user as verified and fetch hospital details
+    const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         is_email_verified: true,
         email_verification_token: null,
         verification_expires_at: null,
       },
+      include: {
+        hospital: true,
+      },
     })
 
-    return NextResponse.json({ message: 'Email verified successfully! You can now sign in.' })
+    // Create session token so user is automatically logged in without needing to sign in again
+    const tokenPayload = {
+      userId: updatedUser.id,
+      hospitalId: updatedUser.hospital_id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      hospitalName: updatedUser.hospital.name,
+    }
+
+    const sessionJwt = await signToken(tokenPayload)
+    const cookieHeader = createAuthCookie(sessionJwt)
+
+    // Return response with Set-Cookie header so browser sets auth_token cookie
+    const response = NextResponse.json({
+      message: 'Email verified successfully! Entering your dashboard...',
+      authenticated: true,
+      user: tokenPayload,
+    })
+
+    response.headers.set('Set-Cookie', cookieHeader)
+    return response
   } catch (error) {
     console.error('Verification error:', error)
     return NextResponse.json(
