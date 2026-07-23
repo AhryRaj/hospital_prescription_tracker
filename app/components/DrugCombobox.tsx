@@ -10,8 +10,7 @@ export interface DrugOption {
   size_amount: number
   size_unit: string
   unit_price: number
-  frequency?: number
-  days?: number
+  standard_dose?: number
 }
 
 interface DrugComboboxProps {

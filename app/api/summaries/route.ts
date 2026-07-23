@@ -1,14 +1,23 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getSessionFromRequest } from '@/lib/auth'
 
 export async function GET(request: Request) {
   try {
+    const session = await getSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || 'daily' // 'daily' | 'weekly' | 'monthly'
     const drugId = searchParams.get('drug_id') // optional drug ID filter
 
-    // Fetch all prescriptions with associated drug information
-    const whereCondition = drugId && drugId !== 'all' ? { drug_id: Number(drugId) } : {}
+    // Fetch all prescriptions with associated drug information — scoped to hospital
+    const whereCondition: any = { hospital_id: session.hospitalId }
+    if (drugId && drugId !== 'all') {
+      whereCondition.drug_id = Number(drugId)
+    }
 
     const prescriptions = await prisma.prescription.findMany({
       where: whereCondition,

@@ -24,8 +24,7 @@ interface Drug {
   size_amount: number
   size_unit: string
   unit_price: number
-  frequency: number
-  days: number
+  standard_dose: number
 }
 
 export default function DrugCatalogPage() {
@@ -44,8 +43,7 @@ export default function DrugCatalogPage() {
   const [newSizeAmount, setNewSizeAmount] = useState<number | string>(750)
   const [newSizeUnit, setNewSizeUnit] = useState('ml')
   const [newUnitPrice, setNewUnitPrice] = useState<number | string>(1500)
-  const [newFrequency, setNewFrequency] = useState<number | string>(3)
-  const [newDays, setNewDays] = useState<number | string>(5)
+  const [newStandardDose, setNewStandardDose] = useState<number | string>(120)
 
   // Edit & Delete State
   const [editingDrug, setEditingDrug] = useState<Drug | null>(null)
@@ -121,8 +119,7 @@ export default function DrugCatalogPage() {
           size_amount: newSizeAmount,
           size_unit: newSizeUnit,
           unit_price: newUnitPrice,
-          frequency: newFrequency,
-          days: newDays,
+          standard_dose: newStandardDose,
         }),
       })
 
@@ -136,6 +133,7 @@ export default function DrugCatalogPage() {
         setNewSizeAmount(750)
         setNewSizeUnit('ml')
         setNewUnitPrice(1500)
+        setNewStandardDose(120)
       } else {
         alert('Failed to add drug.')
       }
@@ -277,7 +275,7 @@ export default function DrugCatalogPage() {
                     <th className="py-3 px-4">Package Size</th>
                     <th className="py-3 px-4">Package Price</th>
                     <th className="py-3 px-4">Calculated Rate</th>
-                    <th className="py-3 px-4">Default Regimen</th>
+                    <th className="py-3 px-4">Standard Dose</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -303,8 +301,10 @@ export default function DrugCatalogPage() {
                         <td className="py-3 px-4 font-extrabold text-emerald-800">
                           LKR {unitRate.toFixed(4)} / {d.size_unit}
                         </td>
-                        <td className="py-3 px-4 text-xs text-slate-500 font-medium">
-                          {d.frequency || 3}x/day for {d.days || 5} days
+                        <td className="py-3 px-4 text-xs text-slate-900 font-bold">
+                          <span className="bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md">
+                            {d.standard_dose || 8} {d.size_unit}
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
@@ -406,20 +406,38 @@ export default function DrugCatalogPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Package Price (LKR)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={newUnitPrice}
-                  onWheel={(e) => (e.target as HTMLElement).blur()}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    setNewUnitPrice(val === '' ? '' : parseFloat(val))
-                  }}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Package Price (LKR)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={newUnitPrice}
+                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setNewUnitPrice(val === '' ? '' : parseFloat(val))
+                    }}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Standard Dose Qty</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    required
+                    value={newStandardDose}
+                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setNewStandardDose(val === '' ? '' : parseFloat(val))
+                    }}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 font-bold"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-3">
@@ -506,22 +524,42 @@ export default function DrugCatalogPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Package Price (LKR) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={editingDrug.unit_price}
-                  onWheel={(e) => (e.target as HTMLElement).blur()}
-                  onChange={(e) =>
-                    setEditingDrug({
-                      ...editingDrug,
-                      unit_price: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-900 font-black text-sm text-emerald-800"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Package Price (LKR) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={editingDrug.unit_price}
+                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                    onChange={(e) =>
+                      setEditingDrug({
+                        ...editingDrug,
+                        unit_price: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-900 font-black text-sm text-emerald-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Standard Dose Qty *</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    required
+                    value={editingDrug.standard_dose}
+                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                    onChange={(e) =>
+                      setEditingDrug({
+                        ...editingDrug,
+                        standard_dose: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-900 font-black text-sm text-emerald-800"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">

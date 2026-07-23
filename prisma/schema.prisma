@@ -10,26 +10,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Hospital {
+  id            Int            @id @default(autoincrement())
+  name          String
+  code          String         @unique
+  email         String?
+  phone         String?
+  address       String?
+  created_at    DateTime       @default(now())
+
+  users         User[]
+  drugs         Drug[]
+  prescriptions Prescription[]
+}
+
+model User {
+  id                       Int       @id @default(autoincrement())
+  hospital_id              Int
+  hospital                 Hospital  @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
+  email                    String    @unique
+  password_hash            String
+  name                     String
+  is_email_verified        Boolean   @default(false)
+  email_verification_token String?   @unique
+  verification_expires_at  DateTime?
+  reset_password_token     String?   @unique
+  reset_expires_at         DateTime?
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+
+  @@index([hospital_id])
+}
+
 model Drug {
   id              Int            @id @default(autoincrement())
+  hospital_id     Int            @default(1)
+  hospital        Hospital       @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
   name            String
   category        String
   size_amount     Float
   size_unit       String         // e.g., 'ml', 'g', 'Qty'
   unit_price      Float
-  frequency       Int            @default(3)
-  days            Int            @default(5)
+  standard_dose   Float          @default(8)
   prescriptions   Prescription[]
+
+  @@index([hospital_id])
 }
 
 model Prescription {
   id              Int      @id @default(autoincrement())
+  hospital_id     Int      @default(1)
+  hospital        Hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
   date            DateTime @db.Date
   patient_id      String
   drug_id         Int
   drug            Drug     @relation(fields: [drug_id], references: [id])
-  dose            Float
   total_qty       Float
   total_cost      Float
   created_at      DateTime @default(now())
+
+  @@index([hospital_id])
 }

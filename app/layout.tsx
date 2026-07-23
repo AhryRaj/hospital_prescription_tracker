@@ -10,7 +10,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const isSummariesPage = pathname.startsWith('/summaries')
+  const isAuthPage = pathname.startsWith('/auth')
+
+  // Auth pages get a clean full-screen layout without sidebar
+  if (isAuthPage) {
+    return (
+      <html lang="en">
+        <body className="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased">
+          {children}
+        </body>
+      </html>
+    )
+  }
 
   return (
     <html lang="en">

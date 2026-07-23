@@ -1,18 +1,54 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { 
   LayoutDashboard, 
   PlusCircle, 
   BarChart3, 
   Pill, 
   ClipboardList, 
-  Sprout
+  Sprout,
+  LogOut,
+  Loader2
 } from 'lucide-react'
+
+interface SessionData {
+  userId: number
+  hospitalId: number
+  email: string
+  name: string
+  hospitalName: string
+}
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [session, setSession] = useState<SessionData | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated) {
+          setSession(data.user)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/auth/login')
+      router.refresh()
+    } catch {
+      setLoggingOut(false)
+    }
+  }
 
   const navItems = [
     {
@@ -80,6 +116,25 @@ export function Sidebar() {
           )
         })}
       </nav>
+
+      {/* Bottom: Sign Out */}
+      <div className="border-t border-slate-100 p-2 pb-3">
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl transition-all group text-slate-400 hover:bg-red-50 hover:text-red-600 w-full disabled:opacity-50"
+          title="Sign Out"
+        >
+          {loggingOut ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <LogOut className="w-5 h-5 transition-transform group-hover:scale-110" />
+          )}
+          <span className="text-[10px] font-bold tracking-tight text-center mt-1">
+            Sign Out
+          </span>
+        </button>
+      </div>
     </div>
   )
 
@@ -91,11 +146,22 @@ export function Sidebar() {
           <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center border border-white/20">
             <Sprout className="w-4 h-4 text-emerald-300" />
           </div>
-          <span className="font-extrabold text-sm tracking-tight">AyurMed System</span>
+          <span className="font-extrabold text-sm tracking-tight">
+            {session?.hospitalName || 'AyurMed System'}
+          </span>
         </div>
-        <span className="text-[11px] font-bold bg-white/15 px-2.5 py-0.5 rounded-full border border-white/20">
-          Prescription Tracker
-        </span>
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="text-white/70 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+          title="Sign Out"
+        >
+          {loggingOut ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <LogOut className="w-4 h-4" />
+          )}
+        </button>
       </div>
 
       {/* 2. Mobile Bottom Navigation Bar (< lg) */}

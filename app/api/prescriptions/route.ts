@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getSessionFromRequest } from '@/lib/auth'
 
 export async function GET(request: Request) {
   try {
+    const session = await getSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const patientId = searchParams.get('patient_id')
     const drugId = searchParams.get('drug_id')
 
-    const where: any = {}
+    const where: any = { hospital_id: session.hospitalId }
     if (patientId) {
       where.patient_id = { contains: patientId }
     }
@@ -34,53 +40,75 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const session = await getSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
-    const { patient_id, drug_id, dose, frequency, days, date } = body
+    const { patient_id, date, items, drug_id, custom_qty } = body
 
-    if (!patient_id || !drug_id || !dose || !frequency || !days) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    if (!patient_id) {
+      return NextResponse.json({ error: 'Patient ID is required' }, { status: 400 })
     }
 
-    const drug = await prisma.drug.findUnique({
-      where: { id: parseInt(drug_id) },
-    })
+    // Determine payload items: either body.items array OR a single item from body
+    const rawItems: Array<{ drug_id: number; custom_qty?: number }> = Array.isArray(items) && items.length > 0
+      ? items
+      : drug_id
+      ? [{ drug_id: Number(drug_id), custom_qty: custom_qty ? Number(custom_qty) : undefined }]
+      : []
 
-    if (!drug) {
-      return NextResponse.json({ error: 'Drug not found' }, { status: 404 })
+    if (rawItems.length === 0) {
+      return NextResponse.json({ error: 'At least one medicine item is required' }, { status: 400 })
     }
 
-    const numDose = parseFloat(dose)
-    const numFreq = parseInt(frequency)
-    const numDays = parseInt(days)
+    const pDate = date ? new Date(date) : new Date()
 
-    // 1. Calculate total dosage quantity required for full duration
-    // total_qty = dose_per_intake * frequency_times_per_day * duration_days
-    const total_qty = numDose * numFreq * numDays
+    // Execute in transaction
+    const createdPrescriptions = await prisma.$transaction(async (tx) => {
+      const results = []
+      for (const item of rawItems) {
+        const drug = await tx.drug.findFirst({
+          where: { id: Number(item.drug_id), hospital_id: session.hospitalId },
+        })
 
-    // 2. Proportional Cost Formula:
-    // Package Price = drug.unit_price (e.g. LKR 1500 for 700 ml)
-    // Package Size  = drug.size_amount (e.g. 700 ml)
-    // Per-unit rate = drug.unit_price / drug.size_amount (e.g. 1500 / 700 = LKR 2.1428 / ml)
-    // Total Expenditure = total_qty * (drug.unit_price / drug.size_amount)
-    const total_cost = (total_qty / drug.size_amount) * drug.unit_price
+        if (!drug) {
+          throw new Error(`Drug ID ${item.drug_id} not found in catalog`)
+        }
 
-    const prescription = await prisma.prescription.create({
-      data: {
-        patient_id: patient_id.trim(),
-        drug_id: parseInt(drug_id),
-        date: date ? new Date(date) : new Date(),
-        dose: numDose,
-        total_qty,
-        total_cost: Math.round(total_cost * 100) / 100,
-      },
-      include: {
-        drug: true,
-      },
+        const total_qty = item.custom_qty && item.custom_qty > 0 ? Number(item.custom_qty) : drug.standard_dose
+        const total_cost = (total_qty / drug.size_amount) * drug.unit_price
+
+        const created = await tx.prescription.create({
+          data: {
+            hospital_id: session.hospitalId,
+            patient_id: patient_id.trim(),
+            drug_id: drug.id,
+            date: pDate,
+            total_qty,
+            total_cost: Math.round(total_cost * 100) / 100,
+          },
+          include: {
+            drug: true,
+          },
+        })
+        results.push(created)
+      }
+      return results
     })
 
-    return NextResponse.json(prescription, { status: 201 })
-  } catch (error) {
+    const grandTotalCost = createdPrescriptions.reduce((sum, p) => sum + p.total_cost, 0)
+
+    return NextResponse.json({
+      success: true,
+      count: createdPrescriptions.length,
+      patient_id: patient_id.trim(),
+      grandTotalCost: Math.round(grandTotalCost * 100) / 100,
+      prescriptions: createdPrescriptions,
+    }, { status: 201 })
+  } catch (error: any) {
     console.error('Error creating prescription:', error)
-    return NextResponse.json({ error: 'Failed to create prescription' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Failed to create prescription' }, { status: 500 })
   }
 }

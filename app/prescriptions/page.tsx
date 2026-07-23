@@ -147,7 +147,6 @@ export default function PrescriptionLogPage() {
                     <th className="py-3 px-5">Date</th>
                     <th className="py-3 px-5">Patient ID</th>
                     <th className="py-3 px-5">Prescribed Drug</th>
-                    <th className="py-3 px-5">Single Dose</th>
                     <th className="py-3 px-5">Total Dispensed</th>
                     <th className="py-3 px-5 text-right">Calculated Cost</th>
                   </tr>
@@ -169,9 +168,6 @@ export default function PrescriptionLogPage() {
                           <span className="whitespace-nowrap inline-block mt-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-bold px-2 py-0.5 rounded-md text-[10px]">
                             {p.drug.category}
                           </span>
-                        </td>
-                        <td className="py-3.5 px-5 text-xs text-slate-600 font-medium">
-                          {p.dose} {p.drug.size_unit}
                         </td>
                         <td className="py-3.5 px-5 font-semibold text-slate-900">
                           {p.total_qty} {p.drug.size_unit}
