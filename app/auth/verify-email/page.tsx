@@ -28,10 +28,10 @@ function VerifyEmailContent() {
           setStatus('success')
           setMessage(data.message || 'Email verified! Entering your hospital portal...')
           
-          // Automatically enter the portal dashboard after 1.5 seconds!
+          // Automatically enter the portal dashboard after 3 seconds!
           setTimeout(() => {
             router.push('/')
-          }, 1500)
+          }, 3000)
         } else {
           setStatus('error')
           setMessage(data.error || 'Verification failed.')
