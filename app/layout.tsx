@@ -16,6 +16,12 @@ export default function RootLayout({
   if (isAuthPage) {
     return (
       <html lang="en">
+        <head>
+          <title>Ayurvedic Hospital Prescription & Expenditure Tracker</title>
+          <meta name="description" content="Ayurvedic Hospital prescription tracker, catalog management, and expenditure analytics system." />
+          <link rel="icon" href="/icon.png" type="image/png" sizes="any" />
+          <link rel="apple-touch-icon" href="/icon.png" />
+        </head>
         <body className="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased">
           {children}
         </body>
@@ -25,6 +31,12 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <title>Ayurvedic Hospital Prescription & Expenditure Tracker</title>
+        <meta name="description" content="Ayurvedic Hospital prescription tracker, catalog management, and expenditure analytics system." />
+        <link rel="icon" href="/icon.png" type="image/png" sizes="any" />
+        <link rel="apple-touch-icon" href="/icon.png" />
+      </head>
       <body className="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased">
         <div className="flex min-h-screen">
           <Sidebar />

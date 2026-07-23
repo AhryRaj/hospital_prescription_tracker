@@ -82,9 +82,11 @@ export function Sidebar() {
     <div className="flex flex-col h-full bg-white border-r border-slate-200/80 shadow-2xs">
       {/* Brand Header Logo (Square Badge) */}
       <div className="h-20 flex flex-col items-center justify-center border-b border-slate-100 bg-emerald-700 text-white">
-        <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-xs">
-          <Sprout className="w-6 h-6 text-white" />
-        </div>
+        <img
+          src="/icon.png"
+          alt="Ayurvedic Hospital Logo"
+          className="w-10 h-10 rounded-xl border border-white/40 shadow-xs object-cover"
+        />
       </div>
 
       {/* Navigation Links (Slim Vertical Stack: Icon over Label) */}
