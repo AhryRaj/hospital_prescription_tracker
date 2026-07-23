@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Sprout, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 
 function VerifyEmailContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -25,7 +26,12 @@ function VerifyEmailContent() {
 
         if (res.ok) {
           setStatus('success')
-          setMessage(data.message || 'Email verified successfully!')
+          setMessage(data.message || 'Email verified! Entering your hospital portal...')
+          
+          // Automatically enter the portal dashboard after 1.5 seconds!
+          setTimeout(() => {
+            router.push('/')
+          }, 1500)
         } else {
           setStatus('error')
           setMessage(data.error || 'Verification failed.')
@@ -37,7 +43,7 @@ function VerifyEmailContent() {
     }
 
     verifyEmail()
-  }, [token])
+  }, [token, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-slate-50 to-teal-50 p-4">
@@ -62,12 +68,10 @@ function VerifyEmailContent() {
               <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
               <h2 className="text-lg font-extrabold text-slate-900">Email Verified! 🎉</h2>
               <p className="text-sm text-slate-500">{message}</p>
-              <Link
-                href="/auth/login"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-xl shadow-md transition-all"
-              >
-                Go to Sign In
-              </Link>
+              <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 py-2 px-4 rounded-xl border border-emerald-200/80">
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                <span>Redirecting directly to your portal dashboard...</span>
+              </div>
             </div>
           )}
 
