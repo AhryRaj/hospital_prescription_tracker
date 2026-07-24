@@ -49,11 +49,11 @@ export function buildVerificationEmail(name: string, verificationUrl: string): s
             Click the button below to verify your email address and activate your account.
           </p>
           <div style="text-align:center;margin:0 0 24px;">
-            <a href="${verificationUrl}" style="display:inline-block;padding:14px 32px;background:#059669;color:#fff;text-decoration:none;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:0.5px;">
+            <a href="${verificationUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:16px 36px;background:#059669;color:#ffffff !important;text-decoration:none !important;border-radius:12px;font-size:15px;font-weight:700;letter-spacing:0.5px;-webkit-text-size-adjust:none;box-shadow:0 4px 12px rgba(5,150,105,0.3);">
               ✅ Verify Email Address
             </a>
           </div>
-          <p style="color:#94a3b8;font-size:12px;line-height:1.5;margin:0 0 8px;">
+          <p style="color:#94a3b8;font-size:12px;line-height:1.5;margin:0 0 8px;text-align:center;">
             This verification link expires in <strong>24 hours</strong>. If you did not register, you can safely ignore this email.
           </p>
           <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;">
