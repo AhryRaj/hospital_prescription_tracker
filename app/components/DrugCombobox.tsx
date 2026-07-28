@@ -106,7 +106,7 @@ export function DrugCombobox({
                     🏥 {allOptionLabel}
                   </span>
                   <span className="text-xs text-slate-500 font-medium block truncate">
-                    Aggregated expenditure for all 261 Ayurvedic drugs
+                    Aggregated expenditure for all Ayurvedic medicines
                   </span>
                 </>
               ) : selectedDrug ? (

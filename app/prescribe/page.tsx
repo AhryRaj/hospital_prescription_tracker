@@ -333,7 +333,7 @@ export default function PrescribePage() {
                       drugs={drugs}
                       selectedDrugId={selectedDrugId}
                       onSelect={handleDrugSelect}
-                      placeholder="Search 261 drugs..."
+                      placeholder="Search medicines..."
                     />
                   )}
                 </div>

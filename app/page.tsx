@@ -52,8 +52,20 @@ export default function DashboardPage() {
     setLoading(true)
     try {
       const [drugsRes, prescriptionsRes] = await Promise.all([
-        fetch('/api/drugs'),
-        fetch('/api/prescriptions'),
+        fetch(`/api/drugs?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        }),
+        fetch(`/api/prescriptions?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        }),
       ])
 
       if (drugsRes.ok) setDrugs(await drugsRes.json())
@@ -391,7 +403,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-sm sm:text-base font-bold text-slate-900 mt-3 sm:mt-5">Browse Medicine Catalog</h3>
             <p className="text-xs text-slate-500 mt-1 leading-relaxed hidden sm:block">
-              Browse all 261 registered medicines, package sizes, unit prices, and add new inventory.
+              Browse all {drugs.length ? drugs.length : ''} registered medicines, package sizes, unit prices, and add new inventory.
             </p>
           </div>
         </Link>
