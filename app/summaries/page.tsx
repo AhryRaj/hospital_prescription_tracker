@@ -2,13 +2,13 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { 
-  BarChart3, 
-  Calendar, 
-  Filter, 
-  Pill, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  BarChart3,
+  Calendar,
+  Filter,
+  Pill,
+  DollarSign,
+  TrendingUp,
   FileText,
   ChevronRight,
   ChevronLeft,
@@ -63,7 +63,7 @@ function SummariesContent() {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>(periodParam || 'daily')
   const [selectedDrugId, setSelectedDrugId] = useState<string>('all')
   const [drugsCatalog, setDrugsCatalog] = useState<Drug[]>([])
-  
+
   const [data, setData] = useState<SummaryResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -179,9 +179,8 @@ function SummariesContent() {
       {/* SECONDARY SUB-SIDEBAR PANEL (Matching Reference Screenshot 3) */}
       {/* ------------------------------------------------------------- */}
       <aside
-        className={`hidden lg:flex fixed left-20 top-0 bottom-0 z-20 bg-white border-r border-slate-200/80 shadow-2xs flex-col transition-all duration-300 ${
-          isSubSidebarOpen ? 'w-56 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-full overflow-hidden'
-        }`}
+        className={`hidden lg:flex fixed left-20 top-0 bottom-0 z-20 bg-white border-r border-slate-200/80 shadow-2xs flex-col transition-all duration-300 ${isSubSidebarOpen ? 'w-56 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-full overflow-hidden'
+          }`}
       >
         {/* Secondary Sub-Sidebar Header */}
         <div className="h-20 flex items-center justify-between px-5 border-b border-slate-100 bg-white">
@@ -204,11 +203,10 @@ function SummariesContent() {
           <button
             type="button"
             onClick={() => setPeriod('daily')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-              period === 'daily'
+            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${period === 'daily'
                 ? 'bg-emerald-50 text-emerald-800 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-            }`}
+              }`}
           >
             Daily Summary
           </button>
@@ -216,11 +214,10 @@ function SummariesContent() {
           <button
             type="button"
             onClick={() => setPeriod('weekly')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-              period === 'weekly'
+            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${period === 'weekly'
                 ? 'bg-emerald-50 text-emerald-800 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-            }`}
+              }`}
           >
             Weekly Summary
           </button>
@@ -228,11 +225,10 @@ function SummariesContent() {
           <button
             type="button"
             onClick={() => setPeriod('monthly')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-              period === 'monthly'
+            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${period === 'monthly'
                 ? 'bg-emerald-50 text-emerald-800 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-            }`}
+              }`}
           >
             Monthly Summary
           </button>
@@ -255,9 +251,8 @@ function SummariesContent() {
       {/* MAIN EXPENDITURE REPORT WORKSPACE CONTAINER                  */}
       {/* ------------------------------------------------------------- */}
       <div
-        className={`transition-all duration-300 w-full max-w-[1600px] mx-auto min-h-[calc(100vh-6.5rem)] flex flex-col justify-between space-y-6 ${
-          isSubSidebarOpen ? 'lg:pl-56' : 'lg:pl-0'
-        }`}
+        className={`transition-all duration-300 w-full max-w-[1600px] mx-auto min-h-[calc(100vh-6.5rem)] flex flex-col justify-between space-y-6 ${isSubSidebarOpen ? 'lg:pl-56' : 'lg:pl-0'
+          }`}
       >
         {/* Mobile/Tablet Control Bar for Period Switching (< lg) */}
         <div className="lg:hidden bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
@@ -266,27 +261,24 @@ function SummariesContent() {
             <button
               type="button"
               onClick={() => setPeriod('daily')}
-              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                period === 'daily' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${period === 'daily' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Daily
             </button>
             <button
               type="button"
               onClick={() => setPeriod('weekly')}
-              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                period === 'weekly' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${period === 'weekly' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Weekly
             </button>
             <button
               type="button"
               onClick={() => setPeriod('monthly')}
-              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                period === 'monthly' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${period === 'monthly' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               Monthly
             </button>
@@ -346,7 +338,7 @@ function SummariesContent() {
             <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200/80 shadow-2xs flex items-center justify-center">
               <BarChart3 className="w-8 h-8" />
             </div>
-            
+
             <div className="space-y-1.5 max-w-md">
               <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">No Expenditure Records Found</h3>
               <p className="text-sm text-slate-500 leading-relaxed">
@@ -395,11 +387,10 @@ function SummariesContent() {
                     <div
                       key={s.periodKey}
                       onClick={() => setActivePeriodKey(s.periodKey)}
-                      className={`p-3.5 rounded-xl transition-all cursor-pointer border select-none ${
-                        isSelected
+                      className={`p-3.5 rounded-xl transition-all cursor-pointer border select-none ${isSelected
                           ? 'bg-emerald-50/80 border-emerald-500 shadow-2xs text-emerald-900'
                           : 'bg-white border-transparent hover:bg-slate-50 text-slate-700'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
@@ -452,8 +443,8 @@ function SummariesContent() {
                           {period === 'daily'
                             ? 'Total Daily Expenditure:'
                             : period === 'weekly'
-                            ? 'Total Weekly Expenditure:'
-                            : 'Total Monthly Expenditure:'}
+                              ? 'Total Weekly Expenditure:'
+                              : 'Total Monthly Expenditure:'}
                         </span>
                         <span className="text-sm sm:text-lg font-black text-emerald-800">
                           LKR {activePeriodObj.totalCost.toFixed(2)}

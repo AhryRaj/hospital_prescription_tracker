@@ -15,7 +15,12 @@ export async function GET(request: Request) {
       where: { hospital_id: session.hospitalId },
       orderBy: { name: 'asc' },
     })
-    return NextResponse.json(drugs)
+
+    const response = NextResponse.json(drugs)
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    return response
   } catch (error) {
     console.error('Error fetching drugs:', error)
     return NextResponse.json({ error: 'Failed to fetch drugs' }, { status: 500 })
