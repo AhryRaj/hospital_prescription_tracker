@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma'
+import { newDrugsData } from '../scripts/seedNewDrugs'
 
 /**
- * Seeds the standard 261 Ayurvedic drug catalog for a newly registered hospital.
+ * Seeds the standard Ayurvedic drug catalog for a newly registered hospital.
  * Each hospital gets their own independent copy they can customize.
  */
 export async function seedHospitalCatalog(hospitalId: number) {
-  const defaultDrugs = [
+  const baseDrugs = [
     { name: 'Abhayarishta', category: 'Arishta', size_amount: 750, size_unit: 'ml', unit_price: 1810 },
     { name: 'Amurtharishta', category: 'Arishta', size_amount: 750, size_unit: 'ml', unit_price: 1180 },
     { name: 'Arjunarishta', category: 'Arishta', size_amount: 750, size_unit: 'ml', unit_price: 1690 },
@@ -269,6 +270,8 @@ export async function seedHospitalCatalog(hospitalId: number) {
     { name: 'Chandraprabha Vati', category: 'Blister Pack', size_amount: 30, size_unit: 's', unit_price: 516 },
   ]
 
+  const defaultDrugs = [...baseDrugs, ...newDrugsData]
+
   const getDoseForCategory = (cat: string): number => {
     switch (cat) {
       case 'Arishta':
@@ -293,6 +296,8 @@ export async function seedHospitalCatalog(hospitalId: number) {
       case 'Oils & Honey':
       case 'Thailaya':
         return 60
+      case 'Bhasma':
+      case 'Senthuram':
       case 'Rasa':
         return 16
       default:
@@ -300,7 +305,7 @@ export async function seedHospitalCatalog(hospitalId: number) {
     }
   }
 
-  // Batch insert all 261 drugs for the new hospital
+  // Batch insert all drugs for the new hospital
   await prisma.drug.createMany({
     data: defaultDrugs.map((drug) => ({
       ...drug,
