@@ -43,41 +43,39 @@ export async function GET() {
     const results = []
 
     for (const hospital of hospitals) {
-      let addedCount = 0
+      const existingDrugs = await prisma.drug.findMany({
+        where: { hospital_id: hospital.id },
+        select: { name: true, category: true, size_amount: true, size_unit: true },
+      })
 
-      for (const drug of newDrugsData) {
-        const existing = await prisma.drug.findFirst({
-          where: {
+      const existingSet = new Set(
+        existingDrugs.map((d) => `${d.name}|${d.category}|${d.size_amount}|${d.size_unit}`)
+      )
+
+      const toInsert = newDrugsData.filter(
+        (d) => !existingSet.has(`${d.name}|${d.category}|${d.size_amount}|${d.size_unit}`)
+      )
+
+      if (toInsert.length > 0) {
+        await prisma.drug.createMany({
+          data: toInsert.map((d) => ({
             hospital_id: hospital.id,
-            name: drug.name,
-            category: drug.category,
-            size_amount: drug.size_amount,
-            size_unit: drug.size_unit,
-          },
+            name: d.name,
+            category: d.category,
+            size_amount: d.size_amount,
+            size_unit: d.size_unit,
+            unit_price: d.unit_price,
+            standard_dose: getDoseForCategory(d.category),
+          })),
         })
-
-        if (!existing) {
-          await prisma.drug.create({
-            data: {
-              hospital_id: hospital.id,
-              name: drug.name,
-              category: drug.category,
-              size_amount: drug.size_amount,
-              size_unit: drug.size_unit,
-              unit_price: drug.unit_price,
-              standard_dose: getDoseForCategory(drug.category),
-            },
-          })
-          addedCount++
-        }
       }
 
-      const totalDrugs = await prisma.drug.count({ where: { hospital_id: hospital.id } })
+      const totalCount = await prisma.drug.count({ where: { hospital_id: hospital.id } })
       results.push({
         hospital_id: hospital.id,
         hospital_name: hospital.name,
-        added: addedCount,
-        total_drugs_now: totalDrugs,
+        added: toInsert.length,
+        total_drugs_now: totalCount,
       })
     }
 
