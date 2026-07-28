@@ -11,10 +11,30 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const drugs = await prisma.drug.findMany({
+    const rawDrugs = await prisma.drug.findMany({
       where: { hospital_id: session.hospitalId },
       orderBy: { name: 'asc' },
     })
+
+    const seen = new Set<string>()
+    const drugs: typeof rawDrugs = []
+    const duplicateIdsToDelete: number[] = []
+
+    for (const drug of rawDrugs) {
+      const key = `${drug.name.trim().toLowerCase()}|${drug.category.trim().toLowerCase()}|${drug.size_amount}|${drug.size_unit.trim().toLowerCase()}`
+      if (seen.has(key)) {
+        duplicateIdsToDelete.push(drug.id)
+      } else {
+        seen.add(key)
+        drugs.push(drug)
+      }
+    }
+
+    if (duplicateIdsToDelete.length > 0) {
+      prisma.drug.deleteMany({
+        where: { id: { in: duplicateIdsToDelete } }
+      }).catch((err) => console.error('Deduplication cleanup error:', err))
+    }
 
     const response = NextResponse.json(drugs)
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
