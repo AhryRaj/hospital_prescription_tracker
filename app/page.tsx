@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { 
-  LayoutDashboard, 
-  PlusCircle, 
-  BarChart3, 
-  Pill, 
-  ClipboardList, 
-  TrendingUp, 
-  FileText, 
-  Users, 
+import {
+  LayoutDashboard,
+  PlusCircle,
+  BarChart3,
+  Pill,
+  ClipboardList,
+  TrendingUp,
+  FileText,
+  Users,
   ArrowRight,
   Sprout,
   Leaf,
@@ -490,29 +490,29 @@ export default function DashboardPage() {
                     })
                     .slice(0, 5)
                     .map((p) => {
-                    const pDate = new Date(p.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })
+                      const pDate = new Date(p.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })
 
-                    return (
-                      <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3.5 px-5 text-slate-500 text-xs font-medium">{pDate}</td>
-                        <td className="py-3.5 px-5 font-bold text-slate-900">{p.patient_id}</td>
-                        <td className="py-3.5 px-5 font-bold text-slate-900">{p.drug.name}</td>
-                        <td className="py-3.5 px-5 text-xs font-medium">
-                          {p.dose} {p.drug.size_unit}
-                        </td>
-                        <td className="py-3.5 px-5 font-semibold text-slate-900">
-                          {p.total_qty} {p.drug.size_unit}
-                        </td>
-                        <td className="py-3.5 px-5 text-right font-bold text-emerald-700">
-                          LKR {p.total_cost.toFixed(2)}
-                        </td>
-                      </tr>
-                    )
-                  })}
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-5 text-slate-500 text-xs font-medium">{pDate}</td>
+                          <td className="py-3.5 px-5 font-bold text-slate-900">{p.patient_id}</td>
+                          <td className="py-3.5 px-5 font-bold text-slate-900">{p.drug.name}</td>
+                          <td className="py-3.5 px-5 text-xs font-medium">
+                            {p.dose} {p.drug.size_unit}
+                          </td>
+                          <td className="py-3.5 px-5 font-semibold text-slate-900">
+                            {p.total_qty} {p.drug.size_unit}
+                          </td>
+                          <td className="py-3.5 px-5 text-right font-bold text-emerald-700">
+                            LKR {p.total_cost.toFixed(2)}
+                          </td>
+                        </tr>
+                      )
+                    })}
                 </tbody>
               </table>
             </div>

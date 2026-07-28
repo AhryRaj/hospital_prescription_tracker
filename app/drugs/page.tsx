@@ -77,7 +77,13 @@ export default function DrugCatalogPage() {
   const fetchDrugs = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/drugs')
+      const res = await fetch(`/api/drugs?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
       if (res.ok) {
         const data = await res.json()
         setDrugs(data)
