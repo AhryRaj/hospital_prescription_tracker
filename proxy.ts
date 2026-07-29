@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
 // Auth pages are public (no token needed)
-const publicRoutes = ['/auth/login', '/auth/register', '/auth/verify-email', '/auth/verify-pending']
+const publicRoutes = ['/auth/login', '/auth/register', '/auth/verify-email', '/auth/verify-pending', '/auth/forgot-password']
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl

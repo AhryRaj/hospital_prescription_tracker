@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { patient_id, date, items, drug_id, custom_qty } = body
+    const { patient_id, date, items, drug_id, custom_qty, gender, age_category, system_category } = body
 
     if (!patient_id) {
       return NextResponse.json({ error: 'Patient ID is required' }, { status: 400 })
@@ -86,6 +86,9 @@ export async function POST(request: Request) {
           data: {
             hospital_id: session.hospitalId,
             patient_id: patient_id.trim(),
+            gender: gender ? String(gender).trim() : undefined,
+            age_category: age_category ? String(age_category).trim() : undefined,
+            system_category: system_category ? String(system_category).trim() : undefined,
             drug_id: drug.id,
             date: pDate,
             total_qty,
@@ -112,5 +115,52 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Error creating prescription:', error)
     return NextResponse.json({ error: error.message || 'Failed to create prescription' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const queryId = searchParams.get('id')
+    let ids: number[] = []
+
+    if (queryId) {
+      ids = [Number(queryId)]
+    } else {
+      try {
+        const body = await request.json()
+        if (Array.isArray(body.ids)) {
+          ids = body.ids.map(Number)
+        } else if (body.id) {
+          ids = [Number(body.id)]
+        }
+      } catch {
+        // body parsing optional
+      }
+    }
+
+    if (ids.length === 0) {
+      return NextResponse.json({ error: 'No prescription IDs provided for deletion' }, { status: 400 })
+    }
+
+    const deleteResult = await prisma.prescription.deleteMany({
+      where: {
+        id: { in: ids },
+        hospital_id: session.hospitalId,
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+      count: deleteResult.count,
+    })
+  } catch (error: any) {
+    console.error('Error deleting prescriptions:', error)
+    return NextResponse.json({ error: error.message || 'Failed to delete prescription(s)' }, { status: 500 })
   }
 }
