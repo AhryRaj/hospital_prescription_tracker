@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma'
-import { newDrugsData } from '../scripts/seedNewDrugs'
 
 /**
  * Seeds the standard Ayurvedic drug catalog for a newly registered hospital.
@@ -270,7 +269,7 @@ export async function seedHospitalCatalog(hospitalId: number) {
     { name: 'Chandraprabha Vati', category: 'Blister Pack', size_amount: 30, size_unit: 's', unit_price: 516 },
   ]
 
-  const defaultDrugs = [...baseDrugs, ...newDrugsData]
+  const defaultDrugs = baseDrugs
 
   const getDoseForCategory = (cat: string): number => {
     switch (cat) {

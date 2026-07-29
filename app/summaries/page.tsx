@@ -14,7 +14,9 @@ import {
   ChevronLeft,
   RefreshCw,
   Sprout,
-  Search
+  Search,
+  FileDown,
+  Printer
 } from 'lucide-react'
 import { Pagination } from '../components/Pagination'
 import { DrugCombobox } from '../components/DrugCombobox'
@@ -74,18 +76,12 @@ function SummariesContent() {
   const [dateSearchQuery, setDateSearchQuery] = useState('')
   const [detailDrugSearchQuery, setDetailDrugSearchQuery] = useState('')
 
-  // Secondary Sub-Sidebar open/close toggle state (Default open on desktop)
+  // Secondary Sub-Sidebar open/close toggle state
   const [isSubSidebarOpen, setIsSubSidebarOpen] = useState(true)
 
   // Internal pagination for Detail Table
   const [detailCurrentPage, setDetailCurrentPage] = useState(1)
-  const [detailItemsPerPage, setDetailItemsPerPage] = useState(10)
-
-  useEffect(() => {
-    if (periodParam && ['daily', 'weekly', 'monthly'].includes(periodParam)) {
-      setPeriod(periodParam)
-    }
-  }, [periodParam])
+  const detailItemsPerPage = 10
 
   useEffect(() => {
     fetchDrugCatalog()
@@ -93,6 +89,15 @@ function SummariesContent() {
 
   useEffect(() => {
     fetchSummaryData()
+
+    const handleFocus = () => {
+      fetchSummaryData()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [period, selectedDrugId])
 
   useEffect(() => {
@@ -102,7 +107,13 @@ function SummariesContent() {
 
   const fetchDrugCatalog = async () => {
     try {
-      const res = await fetch('/api/drugs')
+      const res = await fetch(`/api/drugs?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
       if (res.ok) {
         const catalog = await res.json()
         setDrugsCatalog(catalog)
@@ -115,13 +126,22 @@ function SummariesContent() {
   const fetchSummaryData = async () => {
     setLoading(true)
     try {
-      const url = `/api/summaries?period=${period}&drug_id=${selectedDrugId}`
-      const res = await fetch(url)
+      const url = `/api/summaries?period=${period}&drug_id=${selectedDrugId}&t=${Date.now()}`
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
       if (res.ok) {
         const result = await res.json()
         setData(result)
         if (result.summaries.length > 0) {
-          setActivePeriodKey(result.summaries[0].periodKey)
+          setActivePeriodKey((prev) => {
+            const exists = result.summaries.some((s: SummaryPeriod) => s.periodKey === prev)
+            return exists ? prev : result.summaries[0].periodKey
+          })
         } else {
           setActivePeriodKey(null)
         }
@@ -133,8 +153,73 @@ function SummariesContent() {
     }
   }
 
-  const selectedDrugObj = drugsCatalog.find((d) => d.id === Number(selectedDrugId))
+  // Human-friendly period key formatter
+  const formatPeriodLabel = (periodKey: string, periodType: 'daily' | 'weekly' | 'monthly') => {
+    if (!periodKey) return ''
 
+    if (periodType === 'daily') {
+      try {
+        const parts = periodKey.split('-').map(Number)
+        if (parts.length === 3) {
+          const d = new Date(parts[0], parts[1] - 1, parts[2])
+          return d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            weekday: 'short'
+          })
+        }
+      } catch {}
+      return periodKey
+    }
+
+    if (periodType === 'weekly') {
+      try {
+        const rawDate = periodKey.replace('Week of ', '').trim()
+        const parts = rawDate.split('-').map(Number)
+        if (parts.length === 3) {
+          const monday = new Date(parts[0], parts[1] - 1, parts[2])
+          const sunday = new Date(monday)
+          sunday.setDate(monday.getDate() + 6)
+
+          const dayOfMonth = monday.getDate()
+          const weekNum = Math.ceil(dayOfMonth / 7)
+          const ordinalSuffixes = ['1st', '2nd', '3rd', '4th', '5th']
+          const weekOrdinal = ordinalSuffixes[Math.min(weekNum - 1, 4)] || `${weekNum}th`
+
+          const fullMonthName = monday.toLocaleDateString('en-US', { month: 'long' })
+          const yearNum = monday.getFullYear()
+
+          const startMonth = monday.toLocaleDateString('en-US', { month: 'short' })
+          const startDay = String(monday.getDate()).padStart(2, '0')
+          const endMonth = sunday.toLocaleDateString('en-US', { month: 'short' })
+          const endDay = String(sunday.getDate()).padStart(2, '0')
+
+          const rangeStr = startMonth === endMonth
+            ? `${startMonth} ${startDay} – ${endDay}`
+            : `${startMonth} ${startDay} – ${endMonth} ${endDay}`
+
+          return `${weekOrdinal} Week of ${fullMonthName} ${yearNum} (${rangeStr})`
+        }
+      } catch {}
+      return periodKey
+    }
+
+    if (periodType === 'monthly') {
+      try {
+        const parts = periodKey.split('-').map(Number)
+        if (parts.length === 2) {
+          const d = new Date(parts[0], parts[1] - 1, 1)
+          return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        }
+      } catch {}
+      return periodKey
+    }
+
+    return periodKey
+  }
+
+  const selectedDrugObj = drugsCatalog.find((d) => d.id === Number(selectedDrugId))
   const totalSummaries = data?.summaries || []
 
   // Master Date List Pagination
@@ -146,153 +231,134 @@ function SummariesContent() {
   }, [period, dateSearchQuery])
 
   // Master Period List Filter & Pagination
-  const filteredSummaries = totalSummaries.filter((s) =>
-    s.periodKey.toLowerCase().includes(dateSearchQuery.toLowerCase())
-  )
+  const filteredSummaries = totalSummaries.filter((s) => {
+    const rawMatch = s.periodKey.toLowerCase().includes(dateSearchQuery.toLowerCase())
+    const formattedLabel = formatPeriodLabel(s.periodKey, period).toLowerCase()
+    const formattedMatch = formattedLabel.includes(dateSearchQuery.toLowerCase())
+    return rawMatch || formattedMatch
+  })
+
   const masterTotalPages = Math.max(1, Math.ceil(filteredSummaries.length / masterItemsPerPage))
   const paginatedSummaries = filteredSummaries.slice(
     (masterCurrentPage - 1) * masterItemsPerPage,
     masterCurrentPage * masterItemsPerPage
   )
 
-  // Active Period object for Detail Dashboard
-  const activePeriodObj = totalSummaries.find((s) => s.periodKey === activePeriodKey) || filteredSummaries[0] || null
+  // Active Period object for detail pane
+  const activePeriodObj =
+    totalSummaries.find((s) => s.periodKey === activePeriodKey) ||
+    (totalSummaries.length > 0 ? totalSummaries[0] : null)
 
-  // In-Detail Drug Search Filter
-  const activeDrugBreakdown = activePeriodObj ? activePeriodObj.drugBreakdown : []
-  const filteredDetailDrugs = activeDrugBreakdown.filter(
-    (d) =>
-      d.drugName.toLowerCase().includes(detailDrugSearchQuery.toLowerCase()) ||
-      d.category.toLowerCase().includes(detailDrugSearchQuery.toLowerCase())
+  // Detail Drug Breakdown Filter & Pagination inside active period
+  const detailDrugList = activePeriodObj?.drugBreakdown || []
+  const filteredDetailDrugs = detailDrugList.filter((d) =>
+    d.drugName.toLowerCase().includes(detailDrugSearchQuery.toLowerCase()) ||
+    d.category.toLowerCase().includes(detailDrugSearchQuery.toLowerCase())
   )
 
-  // Pagination for Detail Table
-  const detailTotalPages = Math.ceil(filteredDetailDrugs.length / detailItemsPerPage)
+  const detailTotalPages = Math.max(1, Math.ceil(filteredDetailDrugs.length / detailItemsPerPage))
   const paginatedDetailDrugs = filteredDetailDrugs.slice(
     (detailCurrentPage - 1) * detailItemsPerPage,
     detailCurrentPage * detailItemsPerPage
   )
 
+  const handleExportPDF = () => {
+    if (typeof window !== 'undefined') {
+      window.print()
+    }
+  }
+
   return (
-    <div className="relative">
-      {/* ------------------------------------------------------------- */}
-      {/* SECONDARY SUB-SIDEBAR PANEL (Matching Reference Screenshot 3) */}
-      {/* ------------------------------------------------------------- */}
-      <aside
-        className={`hidden lg:flex fixed left-20 top-0 bottom-0 z-20 bg-white border-r border-slate-200/80 shadow-2xs flex-col transition-all duration-300 ${isSubSidebarOpen ? 'w-56 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-full overflow-hidden'
-          }`}
-      >
-        {/* Secondary Sub-Sidebar Header */}
-        <div className="h-20 flex items-center justify-between px-5 border-b border-slate-100 bg-white">
-          <h2 className="text-sm font-extrabold text-slate-900 tracking-tight">
-            Expenditure Reports
-          </h2>
+    <div className="w-full max-w-[1600px] mx-auto space-y-6">
+      {/* Dynamic Print CSS - Zero Margin Browser Suppression & Multi-Page Table Styling */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            margin: 0 !important;
+            size: A4 portrait;
+          }
+          body {
+            background-color: white !important;
+            color: black !important;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .no-print, nav, aside, button, input, header, footer {
+            display: none !important;
+          }
+          .print-only {
+            display: block !important;
+          }
+          .print-container {
+            padding: 15mm 15mm 15mm 15mm !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          thead {
+            display: table-header-group !important;
+          }
+          tr {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+        }
+        @media screen {
+          .print-only {
+            display: none !important;
+          }
+        }
+      `}</style>
 
-          <button
-            type="button"
-            onClick={() => setIsSubSidebarOpen(false)}
-            className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-            title="Minimize Secondary Sidebar"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+      {/* TOP REPORT CATEGORY SEGMENTED TOGGLE BAR */}
+      <div className="no-print bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 px-1">
+          <BarChart3 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <span className="font-extrabold text-sm text-slate-800 tracking-tight">Expenditure Reports</span>
         </div>
 
-        {/* Sub-Navigation Links */}
-        <div className="flex-1 p-3 space-y-1.5 overflow-y-auto">
-          <button
-            type="button"
-            onClick={() => setPeriod('daily')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${period === 'daily'
-                ? 'bg-emerald-50 text-emerald-800 shadow-2xs'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-          >
-            Daily Summary
-          </button>
+        {/* 3-Tab Segmented Pill Switcher */}
+        <div className="grid grid-cols-3 gap-1.5 w-full sm:w-auto bg-slate-100/90 p-1 rounded-xl border border-slate-200/60">
+          {[
+            { id: 'daily', label: 'Daily', fullLabel: 'Daily Summary', icon: Calendar },
+            { id: 'weekly', label: 'Weekly', fullLabel: 'Weekly Summary', icon: BarChart3 },
+            { id: 'monthly', label: 'Monthly', fullLabel: 'Monthly Summary', icon: TrendingUp },
+          ].map((tab) => {
+            const Icon = tab.icon
+            const isSelected = period === tab.id
 
-          <button
-            type="button"
-            onClick={() => setPeriod('weekly')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${period === 'weekly'
-                ? 'bg-emerald-50 text-emerald-800 shadow-2xs'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-          >
-            Weekly Summary
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setPeriod('monthly')}
-            className={`w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${period === 'monthly'
-                ? 'bg-emerald-50 text-emerald-800 shadow-2xs'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-          >
-            Monthly Summary
-          </button>
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setPeriod(tab.id as 'daily' | 'weekly' | 'monthly')
+                  setDateSearchQuery('')
+                }}
+                className={`flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg font-extrabold text-xs transition-all cursor-pointer select-none ${isSelected
+                    ? 'bg-white text-emerald-900 shadow-xs border border-emerald-300/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  }`}
+              >
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-emerald-600' : 'text-slate-400'}`} />
+                <span className="sm:hidden">{tab.label}</span>
+                <span className="hidden sm:inline">{tab.fullLabel}</span>
+              </button>
+            )
+          })}
         </div>
-      </aside>
+      </div>
 
-      {/* Floating Re-Open Chevron Button ( > ) when minimized */}
-      {!isSubSidebarOpen && (
-        <button
-          type="button"
-          onClick={() => setIsSubSidebarOpen(true)}
-          className="hidden lg:flex fixed left-20 top-6 z-30 w-7 h-7 bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-900 rounded-full border border-slate-300 shadow-md items-center justify-center transition-all cursor-pointer"
-          title="Expand Secondary Sidebar"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* MAIN EXPENDITURE REPORT WORKSPACE CONTAINER                  */}
-      {/* ------------------------------------------------------------- */}
-      <div
-        className={`transition-all duration-300 w-full max-w-[1600px] mx-auto min-h-[calc(100vh-6.5rem)] flex flex-col justify-between space-y-6 ${isSubSidebarOpen ? 'lg:pl-56' : 'lg:pl-0'
-          }`}
-      >
-        {/* Mobile/Tablet Control Bar for Period Switching (< lg) */}
-        <div className="lg:hidden bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
-          <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider shrink-0">Report View:</span>
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl flex-1 max-w-sm">
-            <button
-              type="button"
-              onClick={() => setPeriod('daily')}
-              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${period === 'daily' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              Daily
-            </button>
-            <button
-              type="button"
-              onClick={() => setPeriod('weekly')}
-              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${period === 'weekly' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              Weekly
-            </button>
-            <button
-              type="button"
-              onClick={() => setPeriod('monthly')}
-              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${period === 'monthly' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-            >
-              Monthly
-            </button>
-          </div>
-        </div>
-
-        {/* Top Header Banner + DRUG SCOPE FILTER INSIDE MAIN BODY */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* MAIN REPORT DASHBOARD VIEW */}
+      <div className="w-full space-y-6">
+        {/* Top Header Card */}
+        <div className="no-print bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-emerald-700 font-semibold text-sm">
               <Sprout className="w-5 h-5 text-emerald-600" />
               <span>Ayurvedic Hospital Expenditure Reports</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 mt-1 capitalize">
+            <h1 className="text-2xl font-bold text-slate-900 mt-1 capitalize">
               {period} Expenditure Report
             </h1>
             <p className="text-slate-500 text-sm mt-0.5">
@@ -300,52 +366,61 @@ function SummariesContent() {
             </p>
           </div>
 
-          {/* DRUG SCOPE SEARCH COMBOBOX (INSIDE MAIN BODY CONTENT) */}
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="w-full md:w-72">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+          {/* Controls: Medicine Scope Combobox & Refresh Button */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <div className="w-full sm:w-64">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                 Filter Drug Scope:
               </span>
               <DrugCombobox
                 drugs={drugsCatalog}
                 selectedDrugId={selectedDrugId === 'all' ? 'all' : Number(selectedDrugId)}
-                onSelect={(val) => setSelectedDrugId(String(val))}
+                onSelect={(id) => setSelectedDrugId(String(id))}
                 includeAllOption={true}
-                compact={true}
-                placeholder="Search drug scope..."
+                allOptionLabel="All Medicines"
               />
             </div>
 
             <button
               onClick={fetchSummaryData}
-              className="mt-5 p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-all cursor-pointer flex-shrink-0"
-              title="Refresh Reports"
+              className="mt-auto flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer h-[38px]"
+              title="Refresh reports"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
-        {/* ------------------------------------------------------------- */}
-        {/* MASTER-DETAIL SPLIT WORKSPACE GRID                            */}
-        {/* ------------------------------------------------------------- */}
-        {loading ? (
-          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400 animate-pulse font-medium">
-            Loading expenditure summaries...
+        {/* Selected Drug Filter Info Alert */}
+        {selectedDrugObj && (
+          <div className="no-print bg-emerald-50/80 border border-emerald-200/80 p-3.5 rounded-xl text-xs text-emerald-900 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Pill className="w-4 h-4 text-emerald-700" />
+              <span>
+                Filtering summary reports specifically for <strong className="font-bold">{selectedDrugObj.name}</strong> ({selectedDrugObj.category}).
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedDrugId('all')}
+              className="text-emerald-800 underline font-bold text-[11px] hover:text-emerald-950 cursor-pointer"
+            >
+              Clear Filter
+            </button>
           </div>
-        ) : !data || totalSummaries.length === 0 ? (
-          <div className="flex-1 bg-white p-12 sm:p-16 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center text-center my-auto min-h-[420px] space-y-5">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200/80 shadow-2xs flex items-center justify-center">
-              <BarChart3 className="w-8 h-8" />
-            </div>
+        )}
 
-            <div className="space-y-1.5 max-w-md">
-              <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">No Expenditure Records Found</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                There are no patient prescriptions recorded yet for this hospital. Issue new prescriptions to generate daily, weekly, and monthly expenditure reports automatically.
-              </p>
-            </div>
-
+        {/* MAIN MASTER-DETAIL REPORT GRID */}
+        {loading ? (
+          <div className="no-print bg-white p-12 rounded-2xl border border-slate-200/80 text-center text-slate-400 animate-pulse font-medium">
+            Generating hospital expenditure reports...
+          </div>
+        ) : totalSummaries.length === 0 ? (
+          <div className="no-print bg-white p-12 rounded-2xl border border-slate-200/80 text-center text-slate-500 space-y-3">
+            <BarChart3 className="w-10 h-10 text-slate-300 mx-auto" />
+            <div className="font-bold text-slate-700">No Prescription Records Found</div>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              There are no prescription records issued for the selected period or drug filter.
+            </p>
             <a
               href="/prescribe"
               className="inline-flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-xs transition-all cursor-pointer"
@@ -355,7 +430,7 @@ function SummariesContent() {
             </a>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch flex-1">
+          <div className="no-print grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch flex-1">
             {/* LEFT PANE: MASTER PERIODS LIST */}
             <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col max-h-[320px] lg:max-h-none lg:h-[calc(100vh-14.5rem)] lg:min-h-[580px]">
               <div className="p-3.5 sm:p-4 border-b border-slate-100 bg-slate-50/50 space-y-2 sm:space-y-3">
@@ -382,6 +457,7 @@ function SummariesContent() {
               <div className="divide-y divide-slate-100 overflow-y-auto flex-1 p-2 space-y-1">
                 {paginatedSummaries.map((s) => {
                   const isSelected = activePeriodObj?.periodKey === s.periodKey
+                  const displayLabel = formatPeriodLabel(s.periodKey, period)
 
                   return (
                     <div
@@ -392,19 +468,21 @@ function SummariesContent() {
                           : 'bg-white border-transparent hover:bg-slate-50 text-slate-700'
                         }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
-                          <span>{period === 'daily' ? '📅' : period === 'weekly' ? '📆' : '📊'}</span>
-                          <span>{s.periodKey}</span>
-                        </span>
-                        <span className="font-extrabold text-xs text-emerald-800">
-                          LKR {s.totalCost.toFixed(2)}
+                      {/* Top Header: Full Width Period Title & Date Range */}
+                      <div className="flex items-start gap-2 mb-2">
+                        <span className="shrink-0 mt-0.5 text-base">{period === 'daily' ? '📅' : period === 'weekly' ? '📆' : '📊'}</span>
+                        <span className="font-extrabold text-xs sm:text-sm text-slate-900 leading-snug">
+                          {displayLabel}
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs text-slate-500 mt-2 font-medium">
-                        <span>
+                      {/* Bottom Row: Metrics Left & Formatted Cost Badge Right */}
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/50 text-xs text-slate-500 font-medium">
+                        <span className="truncate text-[11px] sm:text-xs">
                           {s.prescriptionCount} Prescription{s.prescriptionCount > 1 ? 's' : ''} • {s.drugBreakdown.length} Drug{s.drugBreakdown.length > 1 ? 's' : ''}
+                        </span>
+                        <span className="font-extrabold text-xs sm:text-sm text-emerald-800 shrink-0 bg-emerald-100/60 px-2 py-0.5 rounded-lg border border-emerald-200/80">
+                          LKR {s.totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
                     </div>
@@ -427,41 +505,52 @@ function SummariesContent() {
               <div className="lg:col-span-8 flex flex-col justify-between lg:h-[calc(100vh-14.5rem)] lg:min-h-[580px] space-y-5">
                 {/* Active Period Highlights Card */}
                 <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-                  <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 pb-3 border-b border-slate-100">
+                  <div className="flex flex-row items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div>
                       <span className="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
                         Inspecting Active Period
                       </span>
                       <h2 className="text-base sm:text-xl font-extrabold text-slate-900 flex items-center gap-2 mt-0.5">
-                        <span>{activePeriodObj.periodKey}</span>
+                        <span>{formatPeriodLabel(activePeriodObj.periodKey, period)}</span>
                       </h2>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <span className="text-[10px] sm:text-xs text-slate-500 block font-medium">
-                          {period === 'daily'
-                            ? 'Total Daily Expenditure:'
-                            : period === 'weekly'
-                              ? 'Total Weekly Expenditure:'
-                              : 'Total Monthly Expenditure:'}
-                        </span>
-                        <span className="text-sm sm:text-lg font-black text-emerald-800">
-                          LKR {activePeriodObj.totalCost.toFixed(2)}
-                        </span>
-                      </div>
+                    <div className="text-right">
+                      <span className="text-[10px] sm:text-xs text-slate-500 block font-medium">
+                        {period === 'daily'
+                          ? 'Total Daily Expenditure:'
+                          : period === 'weekly'
+                            ? 'Total Weekly Expenditure:'
+                            : 'Total Monthly Expenditure:'}
+                      </span>
+                      <span className="text-base sm:text-2xl font-black text-emerald-800">
+                        LKR {activePeriodObj.totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Summary KPI Strip */}
-                  <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                  {/* Summary KPI Strip with Download PDF Button */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 text-xs">
                     <div>
                       <span className="text-slate-500 block font-medium">Prescriptions Issued:</span>
                       <span className="font-bold text-slate-900 text-sm">{activePeriodObj.prescriptionCount}</span>
                     </div>
+
                     <div>
                       <span className="text-slate-500 block font-medium">Unique Drug Types:</span>
                       <span className="font-bold text-emerald-800 text-sm">{activePeriodObj.drugBreakdown.length} Types</span>
+                    </div>
+
+                    <div className="sm:text-right">
+                      <button
+                        type="button"
+                        onClick={handleExportPDF}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer w-full sm:w-auto shrink-0"
+                        title="Export official PDF report"
+                      >
+                        <FileDown className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">Download PDF Report</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -471,7 +560,7 @@ function SummariesContent() {
                   {/* Table Control Header & In-Period Search Bar */}
                   <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Drug Breakdown for {activePeriodObj.periodKey} ({filteredDetailDrugs.length})
+                      Drug Breakdown ({filteredDetailDrugs.length})
                     </h3>
 
                     {/* In-Period Search Filter */}
@@ -481,7 +570,7 @@ function SummariesContent() {
                         type="text"
                         value={detailDrugSearchQuery}
                         onChange={(e) => setDetailDrugSearchQuery(e.target.value)}
-                        placeholder={`Search drugs in ${activePeriodObj.periodKey}...`}
+                        placeholder={`Search drugs in period...`}
                         className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                       />
                     </div>
@@ -489,7 +578,7 @@ function SummariesContent() {
 
                   {filteredDetailDrugs.length === 0 ? (
                     <div className="p-10 text-center text-slate-400 text-xs font-medium">
-                      No drugs found matching &quot;{detailDrugSearchQuery}&quot; in {activePeriodObj.periodKey}.
+                      No drugs found matching &quot;{detailDrugSearchQuery}&quot;.
                     </div>
                   ) : (
                     <>
@@ -550,6 +639,94 @@ function SummariesContent() {
           </div>
         )}
       </div>
+
+      {/* PRINT-ONLY OFFICIAL HOSPITAL PDF TEMPLATE */}
+      {activePeriodObj && (
+        <div className="print-only print-container text-black space-y-6">
+          {/* Header Branding */}
+          <div className="border-b-2 border-emerald-700 pb-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-black text-emerald-900 uppercase tracking-tight">
+                Ayurvedic Hospital Expenditure Report
+              </h1>
+              <p className="text-xs text-slate-600 mt-1">
+                Official Drug Consumption & Inventory Financial Audit
+              </p>
+            </div>
+            <div className="text-right text-xs text-slate-600">
+              <div>Printed: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+              <div className="font-bold text-slate-900 mt-1">
+                Scope: {period.toUpperCase()} SUMMARY
+              </div>
+            </div>
+          </div>
+
+          {/* Period Summary Card */}
+          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 grid grid-cols-3 gap-4 text-xs">
+            <div>
+              <span className="text-slate-500 font-bold block uppercase text-[10px]">Reporting Period</span>
+              <span className="font-extrabold text-sm text-slate-900">
+                {formatPeriodLabel(activePeriodObj.periodKey, period)}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 font-bold block uppercase text-[10px]">Total Prescriptions Issued</span>
+              <span className="font-extrabold text-sm text-slate-900">
+                {activePeriodObj.prescriptionCount} Prescriptions
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-slate-500 font-bold block uppercase text-[10px]">Total Expenditure</span>
+              <span className="font-black text-base text-emerald-800">
+                LKR {activePeriodObj.totalCost.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* Drug Breakdown Table */}
+          <div className="space-y-2">
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              Medicine Consumption Breakdown ({activePeriodObj.drugBreakdown.length} Types)
+            </h2>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-bold">
+                  <th className="py-2 px-3">#</th>
+                  <th className="py-2 px-3">Medicine Name</th>
+                  <th className="py-2 px-3">Category</th>
+                  <th className="py-2 px-3">Pkg Size</th>
+                  <th className="py-2 px-3">Pkg Price</th>
+                  <th className="py-2 px-3 text-center">Prescriptions</th>
+                  <th className="py-2 px-3">Total Dispensed</th>
+                  <th className="py-2 px-3 text-right">Total Expenditure</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {activePeriodObj.drugBreakdown.map((d, index) => (
+                  <tr key={d.drugId}>
+                    <td className="py-2 px-3 font-medium text-slate-500">{index + 1}</td>
+                    <td className="py-2 px-3 font-bold text-slate-900">{d.drugName}</td>
+                    <td className="py-2 px-3">{d.category}</td>
+                    <td className="py-2 px-3">{d.sizeAmount} {d.sizeUnit}</td>
+                    <td className="py-2 px-3">LKR {d.unitPrice.toFixed(2)}</td>
+                    <td className="py-2 px-3 text-center font-bold">{d.count}</td>
+                    <td className="py-2 px-3 font-bold">{d.qty} {d.sizeUnit}</td>
+                    <td className="py-2 px-3 text-right font-black text-emerald-900">
+                      LKR {d.cost.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer */}
+          <div className="pt-6 border-t border-slate-200 text-[10px] text-slate-500 flex justify-between items-center">
+            <div>Ayurvedic Hospital Prescription Tracker • Confidential Financial Audit</div>
+            <div className="font-semibold text-slate-600">Official Audit Report</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

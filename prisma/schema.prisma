@@ -63,6 +63,9 @@ model Prescription {
   hospital        Hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
   date            DateTime @db.Date
   patient_id      String
+  gender          String?
+  age_category    String?
+  system_category String?
   drug_id         Int
   drug            Drug     @relation(fields: [drug_id], references: [id])
   total_qty       Float

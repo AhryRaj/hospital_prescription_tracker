@@ -284,23 +284,19 @@ export default function DrugCatalogPage() {
         </button>
       </div>
 
-      {/* Bulk Action Bar (When Items Selected) - Responsive Light Theme */}
+      {/* Bulk Action Bar (When Items Selected) - 100% Mobile & Tablet Responsive */}
       {selectedDrugIds.length > 0 && (
-        <div className="bg-emerald-50 p-3 sm:p-4 rounded-2xl shadow-xs border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 animate-in slide-in-from-top-3 duration-200">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <span className="bg-emerald-600 text-white text-xs font-extrabold px-3.5 py-1.5 rounded-full shadow-xs whitespace-nowrap">
-              {selectedDrugIds.length} {selectedDrugIds.length === 1 ? 'Medicine' : 'Medicines'} Selected
-            </span>
-            <span className="text-[11px] text-emerald-800/70 font-medium text-center sm:text-left hidden sm:inline">
-              Select multiple items to delete them simultaneously.
-            </span>
+        <div className="bg-emerald-50 p-3 sm:p-4 rounded-2xl shadow-xs border border-emerald-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 animate-in slide-in-from-top-3 duration-200">
+          <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs sm:text-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span>{selectedDrugIds.length} {selectedDrugIds.length === 1 ? 'Medicine' : 'Medicines'} Selected</span>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setSelectedDrugIds([])}
-              className="flex-1 sm:flex-none px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors cursor-pointer text-center"
+              className="flex-1 sm:flex-none px-3.5 py-2 sm:py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors cursor-pointer text-center truncate"
             >
               Deselect All
             </button>
@@ -308,7 +304,7 @@ export default function DrugCatalogPage() {
             <button
               type="button"
               onClick={() => setShowBulkDeleteModal(true)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 sm:py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
             >
               <Trash2 className="w-3.5 h-3.5 shrink-0" />
               <span>Delete Selected ({selectedDrugIds.length})</span>

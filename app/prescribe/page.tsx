@@ -21,6 +21,37 @@ import {
   Plus
 } from 'lucide-react'
 import { DrugCombobox, DrugOption } from '../components/DrugCombobox'
+import { CustomSelect } from '../components/CustomSelect'
+
+const GENDER_OPTIONS = [
+  { value: 'Male', label: 'Male' },
+  { value: 'Female', label: 'Female' },
+  { value: 'Other', label: 'Other' },
+]
+
+const AGE_CATEGORY_OPTIONS = [
+  { value: '0-1', label: '0-1' },
+  { value: '1+', label: '1+' },
+  { value: '5+', label: '5+' },
+  { value: '10+', label: '10+' },
+  { value: '20+', label: '20+' },
+  { value: '40+', label: '40+' },
+  { value: '60+', label: '60+' },
+]
+
+const SYSTEM_CATEGORY_OPTIONS = [
+  { value: 'b / o', label: 'b / o' },
+  { value: 'c / SP 60', label: 'c / SP 60' },
+  { value: 'e / SM 39', label: 'e / SM 39' },
+  { value: 'g / O', label: 'g / O' },
+  { value: 'h / SP 12', label: 'h / SP 12' },
+  { value: 'i / O', label: 'i / O' },
+  { value: 'j / SP 41', label: 'j / SP 41' },
+  { value: 'k / O', label: 'k / O' },
+  { value: 'l / SK 95', label: 'l / SK 95' },
+  { value: 'm / SN 49', label: 'm / SN 49' },
+  { value: 'n / O', label: 'n / O' },
+]
 
 interface BasketItem {
   key: string
@@ -42,6 +73,9 @@ export default function PrescribePage() {
   const [prescriptionDate, setPrescriptionDate] = useState<string>(todayStr)
   const [patientId, setPatientId] = useState('')
   const [selectedDrugId, setSelectedDrugId] = useState<number | ''>('')
+  const [gender, setGender] = useState<string>('Male')
+  const [ageCategory, setAgeCategory] = useState<string>('20+')
+  const [systemCategory, setSystemCategory] = useState<string>('g / O')
 
   // Basket state for multi-drug prescription
   const [basket, setBasket] = useState<BasketItem[]>([])
@@ -189,6 +223,9 @@ export default function PrescribePage() {
         body: JSON.stringify({
           date: prescriptionDate,
           patient_id: patientId,
+          gender,
+          age_category: ageCategory,
+          system_category: systemCategory,
           items: payloadItems,
         }),
       })
@@ -310,6 +347,45 @@ export default function PrescribePage() {
                   onChange={(e) => setPatientId(e.target.value)}
                   placeholder="e.g. PAT-2026-0042"
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Row 2: Demographics (Gender, Age Category, System Category) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              {/* Gender */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Gender
+                </label>
+                <CustomSelect
+                  options={GENDER_OPTIONS}
+                  value={gender}
+                  onChange={setGender}
+                />
+              </div>
+
+              {/* Age Category */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Age Category
+                </label>
+                <CustomSelect
+                  options={AGE_CATEGORY_OPTIONS}
+                  value={ageCategory}
+                  onChange={setAgeCategory}
+                />
+              </div>
+
+              {/* System Category */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  System Category
+                </label>
+                <CustomSelect
+                  options={SYSTEM_CATEGORY_OPTIONS}
+                  value={systemCategory}
+                  onChange={setSystemCategory}
                 />
               </div>
             </div>
