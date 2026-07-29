@@ -536,19 +536,19 @@ export default function PatientStatsPage() {
                 <span className="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span>
                 <span>OVERALL COMBINED GRAND TOTAL</span>
               </div>
-              <div className="overflow-x-auto rounded-xl border border-emerald-800/90 shadow-2xs max-w-full">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs max-w-full">
                 <table className="w-full text-center border-collapse text-xs min-w-[1050px]">
                   <thead>
-                    <tr className="bg-emerald-800 text-white font-bold uppercase tracking-wider">
-                      <th className="sticky left-0 z-20 py-3 px-3.5 text-left border-r-2 border-emerald-700 bg-emerald-900 min-w-[100px] shadow-xs">
+                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-800 font-bold uppercase tracking-wider">
+                      <th className="sticky left-0 z-20 py-3 px-3.5 text-left border-r-2 border-slate-300 bg-slate-200 min-w-[100px] shadow-xs">
                         Age Category
                       </th>
                       {data.systemCategories.map((sys) => (
-                        <th key={sys} className="py-3 px-3 border-r border-emerald-700 min-w-[85px] sm:min-w-[95px] whitespace-nowrap">
+                        <th key={sys} className="py-3 px-3 border-r border-slate-200 min-w-[85px] sm:min-w-[95px] whitespace-nowrap">
                           {sys}
                         </th>
                       ))}
-                      <th className="sticky right-0 z-20 py-3 px-3.5 bg-emerald-950 font-black min-w-[95px] border-l-2 border-emerald-700 shadow-xs">
+                      <th className="sticky right-0 z-20 py-3 px-3.5 bg-emerald-100 text-emerald-950 font-black min-w-[95px] border-l-2 border-slate-300 shadow-xs">
                         TOTAL NO
                       </th>
                     </tr>
@@ -566,13 +566,13 @@ export default function PatientStatsPage() {
                             return (
                               <td
                                 key={sys}
-                                className={`py-2.5 px-3 border-r border-slate-100 whitespace-nowrap ${val > 0 ? 'font-bold text-emerald-950 bg-emerald-50/40' : 'text-slate-400'}`}
+                                className={`py-2.5 px-3 border-r border-slate-100 whitespace-nowrap ${val > 0 ? 'font-bold text-slate-900 bg-emerald-50/30' : 'text-slate-400'}`}
                               >
                                 {val}
                               </td>
                             )
                           })}
-                          <td className="sticky right-0 z-10 py-2.5 px-3.5 font-extrabold text-emerald-950 bg-emerald-100/90 border-l-2 border-slate-200 shadow-xs">
+                          <td className="sticky right-0 z-10 py-2.5 px-3.5 font-extrabold text-emerald-900 bg-emerald-50/90 border-l-2 border-slate-200 shadow-xs">
                             {rowTotal}
                           </td>
                         </tr>
@@ -580,16 +580,16 @@ export default function PatientStatsPage() {
                     })}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-emerald-900 text-white font-black">
-                      <td className="sticky left-0 z-10 py-3 px-3.5 text-left uppercase border-r-2 border-emerald-800 bg-emerald-950 shadow-xs">
+                    <tr className="bg-slate-200/80 border-t-2 border-slate-300 font-black text-slate-900">
+                      <td className="sticky left-0 z-10 py-3 px-3.5 text-left uppercase border-r-2 border-slate-300 bg-slate-200 shadow-xs">
                         TOTAL NO
                       </td>
                       {data.systemCategories.map((sys) => (
-                        <td key={sys} className="py-3 px-3 border-r border-emerald-800 whitespace-nowrap">
+                        <td key={sys} className="py-3 px-3 border-r border-slate-300 whitespace-nowrap">
                           {getColTotal(data.combinedMatrix, sys)}
                         </td>
                       ))}
-                      <td className="sticky right-0 z-10 py-3 px-3.5 bg-emerald-950 text-white font-black border-l-2 border-emerald-800 shadow-xs">
+                      <td className="sticky right-0 z-10 py-3 px-3.5 bg-emerald-800 text-white font-black border-l-2 border-slate-300 shadow-xs">
                         {data.totalPatients}
                       </td>
                     </tr>
@@ -709,16 +709,16 @@ export default function PatientStatsPage() {
           {/* 3. COMBINED GRAND TOTAL TABLE (PRINT) */}
           <div>
             <h2 className="text-[10px] font-black text-emerald-950 uppercase mb-0.5">OVERALL COMBINED GRAND TOTAL</h2>
-            <table className="w-full text-center border-collapse text-[9px] border border-emerald-800">
+            <table className="w-full text-center border-collapse text-[9px] border border-slate-400">
               <thead>
-                <tr className="bg-emerald-800 text-white font-bold">
-                  <th className="py-[1px] px-1 text-left border-r border-emerald-700 min-w-[70px]">Age Category</th>
+                <tr className="bg-slate-200 border-b border-slate-400 text-slate-900 font-bold">
+                  <th className="py-[1px] px-1 text-left border-r border-slate-400 min-w-[70px]">Age Category</th>
                   {data.systemCategories.map((sys) => (
-                    <th key={sys} className="py-[1px] px-0.5 border-r border-emerald-700">
+                    <th key={sys} className="py-[1px] px-0.5 border-r border-slate-400">
                       {sys}
                     </th>
                   ))}
-                  <th className="py-[1px] px-1 bg-emerald-950 font-black min-w-[65px]">TOTAL NO</th>
+                  <th className="py-[1px] px-1 bg-emerald-200 text-emerald-950 font-black min-w-[65px]">TOTAL NO</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-300">
@@ -730,19 +730,19 @@ export default function PatientStatsPage() {
                         {data.combinedMatrix[age]?.[sys] || 0}
                       </td>
                     ))}
-                    <td className="py-[1px] px-1 font-black bg-emerald-100">{getRowTotal(data.combinedMatrix, age)}</td>
+                    <td className="py-[1px] px-1 font-black bg-emerald-100 text-emerald-950">{getRowTotal(data.combinedMatrix, age)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="bg-emerald-900 text-white font-black border-t border-emerald-950">
-                  <td className="py-[1px] px-1 text-left uppercase border-r border-emerald-800">TOTAL NO</td>
+                <tr className="bg-slate-300 font-black text-slate-900 border-t border-slate-400">
+                  <td className="py-[1px] px-1 text-left uppercase border-r border-slate-400">TOTAL NO</td>
                   {data.systemCategories.map((sys) => (
-                    <td key={sys} className="py-[1px] px-0.5 border-r border-emerald-800">
+                    <td key={sys} className="py-[1px] px-0.5 border-r border-slate-400">
                       {getColTotal(data.combinedMatrix, sys)}
                     </td>
                   ))}
-                  <td className="py-[1px] px-1 bg-emerald-950 text-white font-black">{data.totalPatients}</td>
+                  <td className="py-[1px] px-1 bg-emerald-800 text-white font-black">{data.totalPatients}</td>
                 </tr>
               </tfoot>
             </table>
