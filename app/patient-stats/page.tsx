@@ -210,13 +210,13 @@ export default function PatientStatsPage() {
       `}</style>
 
       {/* Top Banner Card */}
-      <div className="no-print bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 overflow-hidden">
-        <div className="max-w-full">
+      <div className="no-print bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 overflow-visible relative z-30">
+        <div className="flex-1 min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold border border-emerald-200/80 mb-2">
             <Sprout className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span>Hospital Attendance Statistics</span>
           </div>
-          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-snug">
+          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-snug truncate whitespace-normal">
             Patient Statistics & Demographics Reports
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
@@ -224,7 +224,7 @@ export default function PatientStatsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 w-full lg:w-auto shrink-0">
+        <div className="relative z-50 flex items-center gap-2 sm:gap-3 w-full lg:w-auto shrink-0">
           <button
             onClick={fetchStats}
             className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer shrink-0"
@@ -235,11 +235,11 @@ export default function PatientStatsPage() {
           <button
             type="button"
             onClick={handleExportPDF}
-            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
+            className="relative z-50 flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
           >
-            <FileDown className="w-4 h-4 shrink-0" />
-            <span className="hidden xl:inline">{getDownloadButtonLabel()}</span>
-            <span className="xl:hidden">Download PDF Report</span>
+            <FileDown className="w-4 h-4 shrink-0 pointer-events-none" />
+            <span className="hidden md:inline pointer-events-none">{getDownloadButtonLabel()}</span>
+            <span className="md:hidden pointer-events-none">Download PDF Report</span>
           </button>
         </div>
       </div>
