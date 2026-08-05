@@ -14,7 +14,8 @@ import {
   Loader2,
   X,
   AlertCircle,
-  Users
+  Users,
+  FileText
 } from 'lucide-react'
 
 interface SessionData {
@@ -70,6 +71,11 @@ export function Sidebar() {
       name: 'Expenses',
       href: '/summaries',
       icon: BarChart3,
+    },
+    {
+      name: 'Report',
+      href: '/category-expenditure',
+      icon: FileText,
     },
     {
       name: 'Stats',
