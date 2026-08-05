@@ -223,9 +223,16 @@ export async function GET(request: Request) {
           else if (genderLower.startsWith('m')) firstVisitMale++
           else firstVisitOther++
         } else {
-          if (genderLower.startsWith('f')) subsequentVisitFemale++
-          else if (genderLower.startsWith('m')) subsequentVisitMale++
-          else subsequentVisitOther++
+          if (genderLower.startsWith('f')) {
+            subsequentVisitFemale++
+            firstVisitFemale++
+          } else if (genderLower.startsWith('m')) {
+            subsequentVisitMale++
+            firstVisitMale++
+          } else {
+            subsequentVisitOther++
+            firstVisitOther++
+          }
         }
       }
     }
