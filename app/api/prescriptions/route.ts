@@ -67,41 +67,59 @@ export async function POST(request: Request) {
 
     const pDate = date ? new Date(date) : new Date()
 
-    // Execute in transaction
-    const createdPrescriptions = await prisma.$transaction(async (tx) => {
-      const results = []
-      for (const item of rawItems) {
-        const drug = await tx.drug.findFirst({
-          where: { id: Number(item.drug_id), hospital_id: session.hospitalId },
-        })
-
-        if (!drug) {
-          throw new Error(`Drug ID ${item.drug_id} not found in catalog`)
-        }
-
-        const total_qty = item.custom_qty && item.custom_qty > 0 ? Number(item.custom_qty) : drug.standard_dose
-        const total_cost = (total_qty / drug.size_amount) * drug.unit_price
-
-        const created = await tx.prescription.create({
-          data: {
-            hospital_id: session.hospitalId,
-            patient_id: patient_id.trim(),
-            gender: gender ? String(gender).trim() : undefined,
-            age_category: age_category ? String(age_category).trim() : undefined,
-            system_category: system_category ? String(system_category).trim() : undefined,
-            drug_id: drug.id,
-            date: pDate,
-            total_qty,
-            total_cost: Math.round(total_cost * 100) / 100,
-          },
-          include: {
-            drug: true,
-          },
-        })
-        results.push(created)
-      }
-      return results
+    // Batch fetch all requested drugs in a single query outside the transaction
+    const drugIds = Array.from(new Set(rawItems.map((item) => Number(item.drug_id))))
+    const catalogDrugs = await prisma.drug.findMany({
+      where: {
+        id: { in: drugIds },
+        hospital_id: session.hospitalId,
+      },
     })
+
+    const drugMap = new Map(catalogDrugs.map((d) => [d.id, d]))
+
+    // Verify all requested drugs exist in catalog
+    for (const item of rawItems) {
+      if (!drugMap.has(Number(item.drug_id))) {
+        return NextResponse.json({ error: `Drug ID ${item.drug_id} not found in catalog` }, { status: 400 })
+      }
+    }
+
+    // Execute creation in transaction with extended timeout (30s)
+    const createdPrescriptions = await prisma.$transaction(
+      async (tx) => {
+        const results = []
+        for (const item of rawItems) {
+          const drug = drugMap.get(Number(item.drug_id))!
+
+          const total_qty = item.custom_qty && item.custom_qty > 0 ? Number(item.custom_qty) : drug.standard_dose
+          const total_cost = (total_qty / drug.size_amount) * drug.unit_price
+
+          const created = await tx.prescription.create({
+            data: {
+              hospital_id: session.hospitalId,
+              patient_id: patient_id.trim(),
+              gender: gender ? String(gender).trim() : undefined,
+              age_category: age_category ? String(age_category).trim() : undefined,
+              system_category: system_category ? String(system_category).trim() : undefined,
+              drug_id: drug.id,
+              date: pDate,
+              total_qty,
+              total_cost: Math.round(total_cost * 100) / 100,
+            },
+            include: {
+              drug: true,
+            },
+          })
+          results.push(created)
+        }
+        return results
+      },
+      {
+        maxWait: 10000,
+        timeout: 30000,
+      }
+    )
 
     const grandTotalCost = createdPrescriptions.reduce((sum, p) => sum + p.total_cost, 0)
 
