@@ -4,33 +4,6 @@ import { getSessionFromRequest } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
-// Standard Varieties from the Department of Ayurveda report form
-const FORM_VARIETIES = [
-  { code: '01', name: 'Arishtaya', matchKeys: ['arishta', 'arishtaya'] },
-  { code: '02', name: 'Asawaya', matchKeys: ['asawa', 'asawaya', 'asavam'] },
-  { code: '03', name: 'Chenthooram', matchKeys: ['chenthooram', 'centuram'] },
-  { code: '04', name: 'Choornaya', matchKeys: ['choorna', 'choornaya', 'churna'] },
-  { code: '05', name: 'Decoction', matchKeys: ['decoction'] },
-  { code: '06', name: 'Gugul', matchKeys: ['gugul', 'guggulu'] },
-  { code: '07', name: 'Kalkaya', matchKeys: ['kalka', 'kalkaya'] },
-  { code: '08', name: 'Kulikai', matchKeys: ['kulikai', 'gulika', 'gulikai'] },
-  { code: '09', name: 'Lehaya', matchKeys: ['leha', 'lehaya', 'lehyam'] },
-  { code: '10', name: 'Pashpa', matchKeys: ['pashpa', 'bhasma', 'bhasmam'] },
-  { code: '11', name: 'Lepa', matchKeys: ['lepa', 'lepam'] },
-  { code: '12', name: 'Paste', matchKeys: ['paste'] },
-  { code: '13', name: 'Quathaya', matchKeys: ['kwatha', 'quathaya', 'kashayam'] },
-  { code: '14', name: 'Rasa', matchKeys: ['rasa', 'rasayanam'] },
-  { code: '15', name: 'Syrup', matchKeys: ['syrup'] },
-  { code: '16', name: 'Thailaya', matchKeys: ['taila', 'thaila', 'thailaya', 'oil'] },
-  { code: '17', name: 'Tooth powder', matchKeys: ['tooth powder', 'toothpowder'] },
-  { code: '18', name: 'Watti', matchKeys: ['vati', 'watti', 'vatiya'] },
-  { code: '19', name: 'Pethi', matchKeys: ['pethi', 'mathirai'] },
-  { code: '21', name: 'Tablet (unani)', matchKeys: ['tablet (unani)', 'unani tablet'] },
-  { code: '22', name: 'Pill (unani)', matchKeys: ['pill (unani)', 'unani pill'] },
-  { code: '23', name: 'Capsule (unani)', matchKeys: ['capsule (unani)', 'unani capsule'] },
-  { code: '24', name: 'Unani (Others)', matchKeys: ['unani (others)', 'unani'] },
-]
-
 export async function GET(request: Request) {
   try {
     const session = await getSessionFromRequest(request)
@@ -86,7 +59,20 @@ export async function GET(request: Request) {
       }
     }
 
-    // 1. Fetch all prescriptions in the period
+    // 1. Fetch ALL distinct categories from the hospital's Drug catalog (dynamic, not hardcoded)
+    const allDrugCategories = await prisma.drug.findMany({
+      where: { hospital_id: session.hospitalId },
+      select: { category: true },
+      distinct: ['category'],
+      orderBy: { category: 'asc' },
+    })
+
+    const catalogCategories = allDrugCategories
+      .map((d) => d.category.trim())
+      .filter((c) => c.length > 0)
+      .sort((a, b) => a.localeCompare(b))
+
+    // 2. Fetch all prescriptions in the period
     const prescriptions = await prisma.prescription.findMany({
       where,
       include: {
@@ -94,7 +80,7 @@ export async function GET(request: Request) {
       },
     })
 
-    // 2. Aggregate expenditure & quantities by Category
+    // 3. Aggregate expenditure & quantities by Category (exact match on drug.category)
     const categoryTotals: Record<string, { totalCost: number; totalQty: number; units: Record<string, number> }> = {}
 
     for (const rx of prescriptions) {
@@ -115,72 +101,63 @@ export async function GET(request: Request) {
     // Helper to format quantity string with primary unit
     const formatQtyWithUnit = (data?: { totalCost: number; totalQty: number; units: Record<string, number> }) => {
       if (!data || data.totalQty === 0) return '-'
-      // Find top unit
       const topUnit = Object.entries(data.units).sort((a, b) => b[1] - a[1])[0]?.[0] || ''
       const qtyFormatted = Math.round(data.totalQty * 100) / 100
       return `${qtyFormatted}${topUnit}`
     }
 
-    // 3. Map to standard Form Varieties (01 to 24)
+    // 4. Build varieties report from dynamic catalog categories
     const processedCategories = new Set<string>()
-    const varietiesReport = FORM_VARIETIES.map((v) => {
-      let matchedCost = 0
-      let matchedQty = 0
-      const combinedUnits: Record<string, number> = {}
-
-      for (const [catName, data] of Object.entries(categoryTotals)) {
-        const catLower = catName.toLowerCase()
-        const isMatch = v.matchKeys.some((key) => catLower.includes(key))
-
-        if (isMatch) {
-          processedCategories.add(catName)
-          matchedCost += data.totalCost
-          matchedQty += data.totalQty
-          for (const [u, val] of Object.entries(data.units)) {
-            combinedUnits[u] = (combinedUnits[u] || 0) + val
-          }
-        }
-      }
+    const varietiesReport = catalogCategories.map((catName, index) => {
+      const code = String(index + 1).padStart(2, '0')
+      const data = categoryTotals[catName]
+      processedCategories.add(catName)
 
       return {
-        code: v.code,
-        name: `${v.code}.${v.name}`,
-        rawName: v.name,
-        quantity: formatQtyWithUnit({ totalCost: matchedCost, totalQty: matchedQty, units: combinedUnits }),
-        value: Math.round(matchedCost * 100) / 100,
+        code,
+        name: `${code}. ${catName}`,
+        rawName: catName,
+        quantity: formatQtyWithUnit(data),
+        value: data ? Math.round(data.totalCost * 100) / 100 : 0,
       }
     })
 
-    // Add any remaining custom categories in database that didn't match the standard 24
-    let customIndex = 25
+    // Add any prescription categories that exist in data but NOT in the Drug catalog (edge case)
+    let extraIndex = catalogCategories.length + 1
     for (const [catName, data] of Object.entries(categoryTotals)) {
       if (!processedCategories.has(catName)) {
         varietiesReport.push({
-          code: String(customIndex).padStart(2, '0'),
-          name: `${String(customIndex).padStart(2, '0')}.${catName}`,
+          code: String(extraIndex).padStart(2, '0'),
+          name: `${String(extraIndex).padStart(2, '0')}. ${catName}`,
           rawName: catName,
           quantity: formatQtyWithUnit(data),
           value: Math.round(data.totalCost * 100) / 100,
         })
-        customIndex++
+        extraIndex++
       }
     }
 
     const totalExpenditure = varietiesReport.reduce((sum, item) => sum + item.value, 0)
 
-    // 4. Calculate 1st Visit vs Subsequent Visit Statistics based on Patient ID history
-    // Get unique patient_ids in current period
-    const periodPatientMap = new Map<string, string>() // patient_id -> gender
+    // 5. Calculate 1st Visit vs Subsequent Visit Statistics
+    // Build per-patient data: gender + set of distinct dates within the period
+    const periodPatientData = new Map<string, { gender: string; distinctDates: Set<string> }>()
     for (const rx of prescriptions) {
       if (rx.patient_id) {
         const pid = rx.patient_id.trim()
-        if (!periodPatientMap.has(pid)) {
-          periodPatientMap.set(pid, (rx.gender || 'Male').trim())
+        const dateStr = new Date(rx.date).toISOString().split('T')[0]
+
+        if (!periodPatientData.has(pid)) {
+          periodPatientData.set(pid, {
+            gender: (rx.gender || 'Male').trim(),
+            distinctDates: new Set<string>(),
+          })
         }
+        periodPatientData.get(pid)!.distinctDates.add(dateStr)
       }
     }
 
-    const uniquePatientIds = Array.from(periodPatientMap.keys())
+    const uniquePatientIds = Array.from(periodPatientData.keys())
 
     let firstVisitMale = 0
     let firstVisitFemale = 0
@@ -191,7 +168,7 @@ export async function GET(request: Request) {
     let subsequentVisitOther = 0
 
     if (uniquePatientIds.length > 0) {
-      // Find global earliest prescription date for each patient ID in this hospital
+      // Find global earliest prescription date for each patient in this hospital
       const earliestDates = await prisma.prescription.groupBy({
         by: ['patient_id'],
         where: {
@@ -210,28 +187,57 @@ export async function GET(request: Request) {
         }
       }
 
+      // Also check if patients have ANY prescriptions BEFORE the period start
+      // (for cases where previous visits were in earlier periods)
+      let hasDateBeforePeriod = new Set<string>()
+      if (startDate) {
+        const priorVisits = await prisma.prescription.findMany({
+          where: {
+            hospital_id: session.hospitalId,
+            patient_id: { in: uniquePatientIds },
+            date: { lt: startDate },
+          },
+          select: { patient_id: true },
+          distinct: ['patient_id'],
+        })
+        hasDateBeforePeriod = new Set(priorVisits.map((v) => v.patient_id.trim()))
+      }
+
       for (const pid of uniquePatientIds) {
-        const gender = periodPatientMap.get(pid) || 'Male'
+        const patientData = periodPatientData.get(pid)!
+        const gender = patientData.gender
+        const distinctDatesInPeriod = patientData.distinctDates.size
         const globalMinDate = minDateMap.get(pid)
 
-        // If patient's global min date falls within current period (or if no period bounds specified) -> 1st Visit
-        const isFirstVisit = !startDate || !globalMinDate ? true : globalMinDate >= startDate && (!endDate || globalMinDate <= endDate)
+        // 1st Visit: patient's first-ever prescription date falls within this period
+        // For "All-Time" (no startDate), all patients are 1st visit
+        const isFirstVisit =
+          !startDate || !globalMinDate
+            ? true
+            : globalMinDate >= startDate && (!endDate || globalMinDate <= endDate)
+
+        // Subsequent Visit: patient has visited on more than 1 distinct date
+        // Either: multiple distinct dates within the period, OR has dates before the period start
+        const isSubsequentVisit = distinctDatesInPeriod > 1 || hasDateBeforePeriod.has(pid)
 
         const genderLower = gender.toLowerCase()
-        if (isFirstVisit) {
+
+        if (isFirstVisit && !isSubsequentVisit) {
+          // Pure first visit only
           if (genderLower.startsWith('f')) firstVisitFemale++
           else if (genderLower.startsWith('m')) firstVisitMale++
           else firstVisitOther++
-        } else {
+        } else if (isSubsequentVisit) {
+          // Subsequent visit — also count in 1st visit (per user requirement)
           if (genderLower.startsWith('f')) {
-            subsequentVisitFemale++
             firstVisitFemale++
+            subsequentVisitFemale++
           } else if (genderLower.startsWith('m')) {
-            subsequentVisitMale++
             firstVisitMale++
+            subsequentVisitMale++
           } else {
-            subsequentVisitOther++
             firstVisitOther++
+            subsequentVisitOther++
           }
         }
       }
