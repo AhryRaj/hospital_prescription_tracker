@@ -99,11 +99,35 @@ export default function PatientStatsPage() {
     )
   }
 
+  // Sum only "/ O" categories for a given matrix and age
+  const getOMatrixTotal = (matrix: Record<string, Record<string, number>> | null, age: string) => {
+    if (!matrix || !matrix[age]) return 0
+    const oCats = getOCategories()
+    return oCats.reduce((sum, sys) => sum + (matrix[age]?.[sys] || 0), 0)
+  }
+
   // Sum only "/ O" categories for a given age from the combinedMatrix
   const getOTotal = (age: string) => {
-    if (!data?.combinedMatrix?.[age]) return 0
-    const oCats = getOCategories()
-    return oCats.reduce((sum, sys) => sum + (data.combinedMatrix[age]?.[sys] || 0), 0)
+    if (!data) return 0
+    return getOMatrixTotal(data.combinedMatrix, age)
+  }
+
+  // Total for Male OP of a specific age
+  const getOMaleTotal = (age: string) => {
+    if (!data) return 0
+    return getOMatrixTotal(data.maleMatrix, age)
+  }
+
+  // Total for Female OP of a specific age
+  const getOFemaleTotal = (age: string) => {
+    if (!data) return 0
+    return getOMatrixTotal(data.femaleMatrix, age)
+  }
+
+  // Grand column total of all "/ O" categories for a given matrix
+  const getOMatrixColTotal = (matrix: Record<string, Record<string, number>> | null) => {
+    if (!matrix || !data) return 0
+    return data.ageCategories.reduce((sum, age) => sum + getOMatrixTotal(matrix, age), 0)
   }
 
   // Grand total of all "/ O" categories across all age groups
@@ -564,18 +588,32 @@ export default function PatientStatsPage() {
                       <th className="py-3 px-5 text-left border-r-2 border-slate-300 bg-slate-200 min-w-[130px]">
                         Age Category
                       </th>
+                      <th className="py-3 px-5 border-r border-slate-200 bg-blue-50 text-blue-950 font-bold min-w-[110px]">
+                        Male
+                      </th>
+                      <th className="py-3 px-5 border-r border-slate-200 bg-pink-50 text-pink-950 font-bold min-w-[110px]">
+                        Female
+                      </th>
                       <th className="py-3 px-5 bg-emerald-100 text-emerald-950 font-black min-w-[120px]">
-                        OP Total
+                        TOTAL NO
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                     {data.ageCategories.map((age) => {
+                      const maleO = getOMaleTotal(age)
+                      const femaleO = getOFemaleTotal(age)
                       const oTotal = getOTotal(age)
                       return (
                         <tr key={age} className="hover:bg-slate-50 transition-colors">
                           <td className="py-2.5 px-5 text-left font-extrabold text-slate-900 border-r-2 border-slate-200 bg-slate-50">
                             {age}
+                          </td>
+                          <td className={`py-2.5 px-5 border-r border-slate-100 ${maleO > 0 ? 'font-bold text-slate-900 bg-blue-50/30' : 'text-slate-400'}`}>
+                            {maleO}
+                          </td>
+                          <td className={`py-2.5 px-5 border-r border-slate-100 ${femaleO > 0 ? 'font-bold text-slate-900 bg-pink-50/30' : 'text-slate-400'}`}>
+                            {femaleO}
                           </td>
                           <td className={`py-2.5 px-5 font-extrabold ${oTotal > 0 ? 'text-emerald-900 bg-emerald-50/60' : 'text-slate-400'}`}>
                             {oTotal}
@@ -588,6 +626,12 @@ export default function PatientStatsPage() {
                     <tr className="bg-slate-200/80 border-t-2 border-slate-300 font-black text-slate-900">
                       <td className="py-3 px-5 text-left uppercase border-r-2 border-slate-300 bg-slate-200">
                         TOTAL NO
+                      </td>
+                      <td className="py-3 px-5 border-r border-slate-300 bg-blue-100 text-blue-950 font-black">
+                        {getOMatrixColTotal(data.maleMatrix)}
+                      </td>
+                      <td className="py-3 px-5 border-r border-slate-300 bg-pink-100 text-pink-950 font-black">
+                        {getOMatrixColTotal(data.femaleMatrix)}
                       </td>
                       <td className="py-3 px-5 bg-emerald-800 text-white font-black">
                         {getOGrandTotal()}
@@ -713,13 +757,17 @@ export default function PatientStatsPage() {
               <thead>
                 <tr className="bg-slate-200 border-b border-slate-400 text-slate-900 font-bold">
                   <th className="py-[1px] px-1 text-left border-r border-slate-400 min-w-[70px]">Age Category</th>
-                  <th className="py-[1px] px-1 bg-emerald-200 text-emerald-950 font-black min-w-[65px]">OP Total</th>
+                  <th className="py-[1px] px-1 border-r border-slate-400 bg-blue-50 text-blue-900 font-bold min-w-[50px]">Male</th>
+                  <th className="py-[1px] px-1 border-r border-slate-400 bg-pink-50 text-pink-900 font-bold min-w-[50px]">Female</th>
+                  <th className="py-[1px] px-1 bg-emerald-200 text-emerald-950 font-black min-w-[65px]">TOTAL NO</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-300">
                 {data.ageCategories.map((age) => (
                   <tr key={age}>
                     <td className="py-[1px] px-1 text-left font-bold border-r border-slate-400 bg-slate-50">{age}</td>
+                    <td className="py-[1px] px-1 border-r border-slate-300 font-bold">{getOMaleTotal(age)}</td>
+                    <td className="py-[1px] px-1 border-r border-slate-300 font-bold">{getOFemaleTotal(age)}</td>
                     <td className="py-[1px] px-1 font-black bg-emerald-100 text-emerald-950">{getOTotal(age)}</td>
                   </tr>
                 ))}
@@ -727,6 +775,8 @@ export default function PatientStatsPage() {
               <tfoot>
                 <tr className="bg-slate-300 font-black text-slate-900 border-t border-slate-400">
                   <td className="py-[1px] px-1 text-left uppercase border-r border-slate-400">TOTAL NO</td>
+                  <td className="py-[1px] px-1 border-r border-slate-400 bg-blue-100 text-blue-950 font-black">{getOMatrixColTotal(data.maleMatrix)}</td>
+                  <td className="py-[1px] px-1 border-r border-slate-400 bg-pink-100 text-pink-950 font-black">{getOMatrixColTotal(data.femaleMatrix)}</td>
                   <td className="py-[1px] px-1 bg-emerald-800 text-white font-black">{getOGrandTotal()}</td>
                 </tr>
               </tfoot>
