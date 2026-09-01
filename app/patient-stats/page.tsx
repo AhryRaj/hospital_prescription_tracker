@@ -91,6 +91,27 @@ export default function PatientStatsPage() {
     return data.ageCategories.reduce((sum, age) => sum + getRowTotal(matrix, age), 0)
   }
 
+  // Identify "/ O" system categories (case-insensitive match on ending "/ o")
+  const getOCategories = () => {
+    if (!data) return []
+    return data.systemCategories.filter((sys: string) =>
+      sys.trim().toLowerCase().endsWith('/ o')
+    )
+  }
+
+  // Sum only "/ O" categories for a given age from the combinedMatrix
+  const getOTotal = (age: string) => {
+    if (!data?.combinedMatrix?.[age]) return 0
+    const oCats = getOCategories()
+    return oCats.reduce((sum, sys) => sum + (data.combinedMatrix[age]?.[sys] || 0), 0)
+  }
+
+  // Grand total of all "/ O" categories across all age groups
+  const getOGrandTotal = () => {
+    if (!data) return 0
+    return data.ageCategories.reduce((sum, age) => sum + getOTotal(age), 0)
+  }
+
   const formatWeeklyLabel = (dateStr: string) => {
     try {
       const parts = dateStr.split('-').map(Number)
@@ -530,50 +551,34 @@ export default function PatientStatsPage() {
               </div>
             </div>
 
-            {/* 3. OVERALL COMBINED GRAND TOTAL */}
+            {/* 3. OP TOTAL (OUT-PATIENT SUMMARY) */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-emerald-900 uppercase">
                 <span className="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span>
-                <span>OVERALL COMBINED GRAND TOTAL</span>
+                <span>OP TOTAL (OUT-PATIENT SUMMARY)</span>
               </div>
-              <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs max-w-full">
-                <table className="w-full text-center border-collapse text-xs min-w-[1050px]">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs max-w-max">
+                <table className="text-center border-collapse text-xs">
                   <thead>
                     <tr className="bg-slate-100 border-b border-slate-200 text-slate-800 font-bold uppercase tracking-wider">
-                      <th className="sticky left-0 z-20 py-3 px-3.5 text-left border-r-2 border-slate-300 bg-slate-200 min-w-[100px] shadow-xs">
+                      <th className="py-3 px-5 text-left border-r-2 border-slate-300 bg-slate-200 min-w-[130px]">
                         Age Category
                       </th>
-                      {data.systemCategories.map((sys) => (
-                        <th key={sys} className="py-3 px-3 border-r border-slate-200 min-w-[85px] sm:min-w-[95px] whitespace-nowrap">
-                          {sys}
-                        </th>
-                      ))}
-                      <th className="sticky right-0 z-20 py-3 px-3.5 bg-emerald-100 text-emerald-950 font-black min-w-[95px] border-l-2 border-slate-300 shadow-xs">
-                        TOTAL NO
+                      <th className="py-3 px-5 bg-emerald-100 text-emerald-950 font-black min-w-[120px]">
+                        OP Total
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                     {data.ageCategories.map((age) => {
-                      const rowTotal = getRowTotal(data.combinedMatrix, age)
+                      const oTotal = getOTotal(age)
                       return (
                         <tr key={age} className="hover:bg-slate-50 transition-colors">
-                          <td className="sticky left-0 z-10 py-2.5 px-3.5 text-left font-extrabold text-slate-900 border-r-2 border-slate-200 bg-slate-50 shadow-xs">
+                          <td className="py-2.5 px-5 text-left font-extrabold text-slate-900 border-r-2 border-slate-200 bg-slate-50">
                             {age}
                           </td>
-                          {data.systemCategories.map((sys) => {
-                            const val = data.combinedMatrix?.[age]?.[sys] || 0
-                            return (
-                              <td
-                                key={sys}
-                                className={`py-2.5 px-3 border-r border-slate-100 whitespace-nowrap ${val > 0 ? 'font-bold text-slate-900 bg-emerald-50/30' : 'text-slate-400'}`}
-                              >
-                                {val}
-                              </td>
-                            )
-                          })}
-                          <td className="sticky right-0 z-10 py-2.5 px-3.5 font-extrabold text-emerald-900 bg-emerald-50/90 border-l-2 border-slate-200 shadow-xs">
-                            {rowTotal}
+                          <td className={`py-2.5 px-5 font-extrabold ${oTotal > 0 ? 'text-emerald-900 bg-emerald-50/60' : 'text-slate-400'}`}>
+                            {oTotal}
                           </td>
                         </tr>
                       )
@@ -581,16 +586,11 @@ export default function PatientStatsPage() {
                   </tbody>
                   <tfoot>
                     <tr className="bg-slate-200/80 border-t-2 border-slate-300 font-black text-slate-900">
-                      <td className="sticky left-0 z-10 py-3 px-3.5 text-left uppercase border-r-2 border-slate-300 bg-slate-200 shadow-xs">
+                      <td className="py-3 px-5 text-left uppercase border-r-2 border-slate-300 bg-slate-200">
                         TOTAL NO
                       </td>
-                      {data.systemCategories.map((sys) => (
-                        <td key={sys} className="py-3 px-3 border-r border-slate-300 whitespace-nowrap">
-                          {getColTotal(data.combinedMatrix, sys)}
-                        </td>
-                      ))}
-                      <td className="sticky right-0 z-10 py-3 px-3.5 bg-emerald-800 text-white font-black border-l-2 border-slate-300 shadow-xs">
-                        {data.totalPatients}
+                      <td className="py-3 px-5 bg-emerald-800 text-white font-black">
+                        {getOGrandTotal()}
                       </td>
                     </tr>
                   </tfoot>
@@ -706,43 +706,28 @@ export default function PatientStatsPage() {
             </table>
           </div>
 
-          {/* 3. COMBINED GRAND TOTAL TABLE (PRINT) */}
+          {/* 3. OP TOTAL (PRINT) */}
           <div>
-            <h2 className="text-[10px] font-black text-emerald-950 uppercase mb-0.5">OVERALL COMBINED GRAND TOTAL</h2>
-            <table className="w-full text-center border-collapse text-[9px] border border-slate-400">
+            <h2 className="text-[10px] font-black text-emerald-950 uppercase mb-0.5">OP TOTAL (OUT-PATIENT SUMMARY)</h2>
+            <table className="text-center border-collapse text-[9px] border border-slate-400">
               <thead>
                 <tr className="bg-slate-200 border-b border-slate-400 text-slate-900 font-bold">
                   <th className="py-[1px] px-1 text-left border-r border-slate-400 min-w-[70px]">Age Category</th>
-                  {data.systemCategories.map((sys) => (
-                    <th key={sys} className="py-[1px] px-0.5 border-r border-slate-400">
-                      {sys}
-                    </th>
-                  ))}
-                  <th className="py-[1px] px-1 bg-emerald-200 text-emerald-950 font-black min-w-[65px]">TOTAL NO</th>
+                  <th className="py-[1px] px-1 bg-emerald-200 text-emerald-950 font-black min-w-[65px]">OP Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-300">
                 {data.ageCategories.map((age) => (
                   <tr key={age}>
                     <td className="py-[1px] px-1 text-left font-bold border-r border-slate-400 bg-slate-50">{age}</td>
-                    {data.systemCategories.map((sys) => (
-                      <td key={sys} className="py-[1px] px-0.5 border-r border-slate-300">
-                        {data.combinedMatrix[age]?.[sys] || 0}
-                      </td>
-                    ))}
-                    <td className="py-[1px] px-1 font-black bg-emerald-100 text-emerald-950">{getRowTotal(data.combinedMatrix, age)}</td>
+                    <td className="py-[1px] px-1 font-black bg-emerald-100 text-emerald-950">{getOTotal(age)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="bg-slate-300 font-black text-slate-900 border-t border-slate-400">
                   <td className="py-[1px] px-1 text-left uppercase border-r border-slate-400">TOTAL NO</td>
-                  {data.systemCategories.map((sys) => (
-                    <td key={sys} className="py-[1px] px-0.5 border-r border-slate-400">
-                      {getColTotal(data.combinedMatrix, sys)}
-                    </td>
-                  ))}
-                  <td className="py-[1px] px-1 bg-emerald-800 text-white font-black">{data.totalPatients}</td>
+                  <td className="py-[1px] px-1 bg-emerald-800 text-white font-black">{getOGrandTotal()}</td>
                 </tr>
               </tfoot>
             </table>
