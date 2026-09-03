@@ -187,8 +187,7 @@ export async function GET(request: Request) {
         }
       }
 
-      // Also check if patients have ANY prescriptions BEFORE the period start
-      // (for cases where previous visits were in earlier periods)
+      // Check if patients have ANY prescriptions BEFORE the period start
       let hasDateBeforePeriod = new Set<string>()
       if (startDate) {
         const priorVisits = await prisma.prescription.findMany({
@@ -207,38 +206,27 @@ export async function GET(request: Request) {
         const patientData = periodPatientData.get(pid)!
         const gender = patientData.gender
         const distinctDatesInPeriod = patientData.distinctDates.size
-        const globalMinDate = minDateMap.get(pid)
 
-        // 1st Visit: patient's first-ever prescription date falls within this period
-        // For "All-Time" (no startDate), all patients are 1st visit
-        const isFirstVisit =
-          !startDate || !globalMinDate
-            ? true
-            : globalMinDate >= startDate && (!endDate || globalMinDate <= endDate)
-
-        // Subsequent Visit: patient has visited on more than 1 distinct date
-        // Either: multiple distinct dates within the period, OR has dates before the period start
-        const isSubsequentVisit = distinctDatesInPeriod > 1 || hasDateBeforePeriod.has(pid)
+        // If a filter period has a startDate (daily, weekly, monthly):
+        // A patient is a Subsequent Visit if they have prior history before startDate.
+        // If All-Time (no startDate):
+        // A patient is a Subsequent Visit if they visited on more than 1 distinct date in total.
+        const isSubsequentVisit = startDate
+          ? hasDateBeforePeriod.has(pid)
+          : distinctDatesInPeriod > 1
 
         const genderLower = gender.toLowerCase()
 
-        if (isFirstVisit && !isSubsequentVisit) {
-          // Pure first visit only
+        if (isSubsequentVisit) {
+          // Patient has prior history before this period -> Subsequent Visit
+          if (genderLower.startsWith('f')) subsequentVisitFemale++
+          else if (genderLower.startsWith('m')) subsequentVisitMale++
+          else subsequentVisitOther++
+        } else {
+          // Patient has no prior history before this period -> 1st Visit
           if (genderLower.startsWith('f')) firstVisitFemale++
           else if (genderLower.startsWith('m')) firstVisitMale++
           else firstVisitOther++
-        } else if (isSubsequentVisit) {
-          // Subsequent visit — also count in 1st visit (per user requirement)
-          if (genderLower.startsWith('f')) {
-            firstVisitFemale++
-            subsequentVisitFemale++
-          } else if (genderLower.startsWith('m')) {
-            firstVisitMale++
-            subsequentVisitMale++
-          } else {
-            firstVisitOther++
-            subsequentVisitOther++
-          }
         }
       }
     }
