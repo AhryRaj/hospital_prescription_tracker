@@ -207,13 +207,10 @@ export async function GET(request: Request) {
         const gender = patientData.gender
         const distinctDatesInPeriod = patientData.distinctDates.size
 
-        // If a filter period has a startDate (daily, weekly, monthly):
-        // A patient is a Subsequent Visit if they have prior history before startDate.
-        // If All-Time (no startDate):
-        // A patient is a Subsequent Visit if they visited on more than 1 distinct date in total.
-        const isSubsequentVisit = startDate
-          ? hasDateBeforePeriod.has(pid)
-          : distinctDatesInPeriod > 1
+        // A patient is a Subsequent Visit if:
+        // 1. They have prior history before this period (hasDateBeforePeriod.has(pid)), OR
+        // 2. They visited on multiple distinct dates within this period (distinctDatesInPeriod > 1)
+        const isSubsequentVisit = hasDateBeforePeriod.has(pid) || distinctDatesInPeriod > 1
 
         const genderLower = gender.toLowerCase()
 
