@@ -144,7 +144,7 @@ export async function GET(request: Request) {
     const periodPatientData = new Map<string, { gender: string; distinctDates: Set<string> }>()
     for (const rx of prescriptions) {
       if (rx.patient_id) {
-        const pid = rx.patient_id.trim()
+        const pid = rx.patient_id.trim().toLowerCase()
         const dateStr = new Date(rx.date).toISOString().split('T')[0]
 
         if (!periodPatientData.has(pid)) {
@@ -168,25 +168,6 @@ export async function GET(request: Request) {
     let subsequentVisitOther = 0
 
     if (uniquePatientIds.length > 0) {
-      // Find global earliest prescription date for each patient in this hospital
-      const earliestDates = await prisma.prescription.groupBy({
-        by: ['patient_id'],
-        where: {
-          hospital_id: session.hospitalId,
-          patient_id: { in: uniquePatientIds },
-        },
-        _min: {
-          date: true,
-        },
-      })
-
-      const minDateMap = new Map<string, Date>()
-      for (const item of earliestDates) {
-        if (item.patient_id && item._min.date) {
-          minDateMap.set(item.patient_id.trim(), new Date(item._min.date))
-        }
-      }
-
       // Check if patients have ANY prescriptions BEFORE the period start
       let hasDateBeforePeriod = new Set<string>()
       if (startDate) {
@@ -199,7 +180,7 @@ export async function GET(request: Request) {
           select: { patient_id: true },
           distinct: ['patient_id'],
         })
-        hasDateBeforePeriod = new Set(priorVisits.map((v) => v.patient_id.trim()))
+        hasDateBeforePeriod = new Set(priorVisits.map((v) => v.patient_id.trim().toLowerCase()))
       }
 
       for (const pid of uniquePatientIds) {
