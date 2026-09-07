@@ -83,25 +83,25 @@ export async function GET(request: Request) {
       orderBy: { date: 'desc' },
     })
 
-    // To avoid double-counting multi-medicine prescriptions for the same patient visit on the same day,
-    // we group by unique patient visit key: `${patient_id}|${date.toISOString().split('T')[0]}`
-    const visitMap = new Map<string, { gender: string; age_category: string; system_category: string; date: string }>()
+    // Group by unique patient ID within the selected period so that repeat visits by the same patient
+    // are not duplicated and the patient is counted as ONE unique patient for this period.
+    const patientMap = new Map<string, { gender: string; age_category: string; system_category: string; date: string }>()
 
     for (const p of prescriptions) {
-      const dateStr = new Date(p.date).toISOString().split('T')[0]
-      const visitKey = `${p.patient_id.trim().toLowerCase()}|${dateStr}`
+      if (!p.patient_id) continue
+      const pid = p.patient_id.trim().toLowerCase()
 
-      if (!visitMap.has(visitKey)) {
-        visitMap.set(visitKey, {
+      if (!patientMap.has(pid)) {
+        patientMap.set(pid, {
           gender: p.gender || 'Male',
           age_category: p.age_category || '20+',
           system_category: p.system_category || 'g / O',
-          date: dateStr,
+          date: new Date(p.date).toISOString().split('T')[0],
         })
       }
     }
 
-    const visits = Array.from(visitMap.values())
+    const visits = Array.from(patientMap.values())
 
     // Initialize matrices
     const createEmptyMatrix = () => {
