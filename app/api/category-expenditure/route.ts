@@ -168,40 +168,22 @@ export async function GET(request: Request) {
     let subsequentVisitOther = 0
 
     if (uniquePatientIds.length > 0) {
-      // Check if patients have ANY prescriptions BEFORE the period start
-      let hasDateBeforePeriod = new Set<string>()
-      if (startDate) {
-        const priorVisits = await prisma.prescription.findMany({
-          where: {
-            hospital_id: session.hospitalId,
-            patient_id: { in: uniquePatientIds },
-            date: { lt: startDate },
-          },
-          select: { patient_id: true },
-          distinct: ['patient_id'],
-        })
-        hasDateBeforePeriod = new Set(priorVisits.map((v) => v.patient_id.trim().toLowerCase()))
-      }
-
       for (const pid of uniquePatientIds) {
         const patientData = periodPatientData.get(pid)!
         const gender = patientData.gender
         const distinctDatesInPeriod = patientData.distinctDates.size
 
-        // A patient is a Subsequent Visit if:
-        // 1. They have prior history before this period (hasDateBeforePeriod.has(pid)), OR
-        // 2. They visited on multiple distinct dates within this period (distinctDatesInPeriod > 1)
-        const isSubsequentVisit = hasDateBeforePeriod.has(pid) || distinctDatesInPeriod > 1
+        // A patient is considered a Subsequent Visit in this period only if they visited on more than 1 distinct date in this period.
+        // If they visited on only 1 distinct date in this period, they are counted as 1st Visit for this period.
+        const isSubsequentVisit = distinctDatesInPeriod > 1
 
         const genderLower = gender.toLowerCase()
 
         if (isSubsequentVisit) {
-          // Patient has prior history before this period -> Subsequent Visit
           if (genderLower.startsWith('f')) subsequentVisitFemale++
           else if (genderLower.startsWith('m')) subsequentVisitMale++
           else subsequentVisitOther++
         } else {
-          // Patient has no prior history before this period -> 1st Visit
           if (genderLower.startsWith('f')) firstVisitFemale++
           else if (genderLower.startsWith('m')) firstVisitMale++
           else firstVisitOther++
