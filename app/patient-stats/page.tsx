@@ -262,7 +262,7 @@ export default function PatientStatsPage() {
             <span>Hospital Attendance Statistics</span>
           </div>
           <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-snug truncate whitespace-normal">
-            Patient Statistics & Demographics Reports
+            Patient Attendance & Demographics Reports
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
             Daily, Weekly, and Monthly cross-tabulation reports split by Gender, Age Category, and System Category.
@@ -368,7 +368,7 @@ export default function PatientStatsPage() {
         <div className="no-print grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-2">
             <div>
-              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Patients</span>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Attendance</span>
               <span className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 block">{data.totalPatients}</span>
               <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate block max-w-[120px] sm:max-w-none">{getPeriodTitle()}</span>
             </div>
@@ -379,7 +379,7 @@ export default function PatientStatsPage() {
 
           <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-2">
             <div>
-              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">Male Patients</span>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">Male Attendance</span>
               <span className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 block">{data.totalMale}</span>
               <span className="text-[10px] sm:text-[11px] text-emerald-700 font-bold block">
                 {data.totalPatients > 0 ? ((data.totalMale / data.totalPatients) * 100).toFixed(1) : '0.0'}% of total
@@ -392,7 +392,7 @@ export default function PatientStatsPage() {
 
           <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-2">
             <div>
-              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">Female Patients</span>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">Female Attendance</span>
               <span className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 block">{data.totalFemale}</span>
               <span className="text-[10px] sm:text-[11px] text-pink-700 font-bold block">
                 {data.totalPatients > 0 ? ((data.totalFemale / data.totalPatients) * 100).toFixed(1) : '0.0'}% of total
@@ -405,7 +405,7 @@ export default function PatientStatsPage() {
 
           <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-2">
             <div>
-              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">Other Patients</span>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">Other Attendance</span>
               <span className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 block">{data.totalOther}</span>
               <span className="text-[10px] sm:text-[11px] text-purple-700 font-bold block">
                 {data.totalPatients > 0 ? ((data.totalOther / data.totalPatients) * 100).toFixed(1) : '0.0'}% of total
@@ -443,7 +443,7 @@ export default function PatientStatsPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-blue-900 uppercase">
                 <span className="w-3 h-3 rounded-full bg-blue-600 inline-block"></span>
-                <span>MALE PATIENTS</span>
+                <span>MALE ATTENDANCE</span>
               </div>
               <div className="overflow-x-auto rounded-xl border border-slate-200/90 shadow-2xs max-w-full">
                 <table className="w-full text-center border-collapse text-xs min-w-[1050px]">
@@ -511,7 +511,7 @@ export default function PatientStatsPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-pink-900 uppercase">
                 <span className="w-3 h-3 rounded-full bg-pink-600 inline-block"></span>
-                <span>FEMALE PATIENTS</span>
+                <span>FEMALE ATTENDANCE</span>
               </div>
               <div className="overflow-x-auto rounded-xl border border-slate-200/90 shadow-2xs max-w-full">
                 <table className="w-full text-center border-collapse text-xs min-w-[1050px]">
@@ -652,7 +652,7 @@ export default function PatientStatsPage() {
           <div className="border-b border-emerald-900 pb-1 flex items-center justify-between">
             <div>
               <h1 className="text-base font-black text-emerald-950 uppercase tracking-tight">
-                AYURVEDIC HOSPITAL PATIENT STATISTICS
+                AYURVEDIC HOSPITAL PATIENT ATTENDANCE REPORT
               </h1>
               <p className="text-[10px] text-slate-700 font-bold uppercase">
                 {getPeriodTitle()}
@@ -661,14 +661,14 @@ export default function PatientStatsPage() {
             <div className="text-right text-[10px] text-slate-600">
               <div>Printed: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
               <div className="font-extrabold text-slate-900">
-                TOTAL PATIENTS: {data.totalPatients}
+                TOTAL ATTENDANCE: {data.totalPatients}
               </div>
             </div>
           </div>
 
           {/* 1. MALE RECORD TABLE (PRINT) */}
           <div>
-            <h2 className="text-[10px] font-black text-blue-900 uppercase mb-0.5">MALE PATIENTS</h2>
+            <h2 className="text-[10px] font-black text-blue-900 uppercase mb-0.5">MALE ATTENDANCE</h2>
             <table className="w-full text-center border-collapse text-[9px] border border-slate-400">
               <thead>
                 <tr className="bg-slate-200 border-b border-slate-400 text-slate-900 font-bold">
@@ -710,7 +710,7 @@ export default function PatientStatsPage() {
 
           {/* 2. FEMALE RECORD TABLE (PRINT) */}
           <div>
-            <h2 className="text-[10px] font-black text-pink-900 uppercase mb-0.5">FEMALE PATIENTS</h2>
+            <h2 className="text-[10px] font-black text-pink-900 uppercase mb-0.5">FEMALE ATTENDANCE</h2>
             <table className="w-full text-center border-collapse text-[9px] border border-slate-400">
               <thead>
                 <tr className="bg-slate-200 border-b border-slate-400 text-slate-900 font-bold">
