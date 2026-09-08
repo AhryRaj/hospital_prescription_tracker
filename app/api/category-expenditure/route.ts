@@ -180,10 +180,12 @@ export async function GET(request: Request) {
         const genderLower = gender.toLowerCase()
 
         if (isSubsequentVisit) {
-          if (genderLower.startsWith('f')) subsequentVisitFemale++
-          else if (genderLower.startsWith('m')) subsequentVisitMale++
-          else subsequentVisitOther++
+          // If the patient attended on multiple dates in this period, all their attendances in this period count as subsequent visits
+          if (genderLower.startsWith('f')) subsequentVisitFemale += distinctDatesInPeriod
+          else if (genderLower.startsWith('m')) subsequentVisitMale += distinctDatesInPeriod
+          else subsequentVisitOther += distinctDatesInPeriod
         } else {
+          // Patient attended only once in this period
           if (genderLower.startsWith('f')) firstVisitFemale++
           else if (genderLower.startsWith('m')) firstVisitMale++
           else firstVisitOther++
