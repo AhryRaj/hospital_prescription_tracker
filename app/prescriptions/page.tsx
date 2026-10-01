@@ -46,6 +46,7 @@ export default function PrescriptionLogPage() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [loading, setLoading] = useState(true)
   const [patientSearch, setPatientSearch] = useState('')
+  const [selectedDate, setSelectedDate] = useState('')
 
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -63,7 +64,7 @@ export default function PrescriptionLogPage() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [patientSearch])
+  }, [patientSearch, selectedDate])
 
   useEffect(() => {
     if (message) {
@@ -96,11 +97,28 @@ export default function PrescriptionLogPage() {
   }
 
   const filtered = prescriptions
-    .filter(
-      (p) =>
-        p.patient_id.toLowerCase().includes(patientSearch.toLowerCase()) ||
-        p.drug.name.toLowerCase().includes(patientSearch.toLowerCase())
-    )
+    .filter((p) => {
+      // 1. Search Query: Patient ID, Drug Name, or Drug Type (category)
+      const query = patientSearch.trim().toLowerCase()
+      let matchesSearch = true
+      if (query) {
+        const pid = (p.patient_id || '').toLowerCase()
+        const drugName = (p.drug?.name || '').toLowerCase()
+        const drugType = (p.drug?.category || '').toLowerCase()
+        matchesSearch = pid.includes(query) || drugName.includes(query) || drugType.includes(query)
+      }
+
+      // 2. Date Filter
+      let matchesDate = true
+      if (selectedDate) {
+        const d = new Date(p.date)
+        const localYMD = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        const isoYMD = d.toISOString().split('T')[0]
+        matchesDate = localYMD === selectedDate || isoYMD === selectedDate
+      }
+
+      return matchesSearch && matchesDate
+    })
     .sort((a, b) => {
       const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime()
       if (dateDiff !== 0) return dateDiff
@@ -258,19 +276,53 @@ export default function PrescriptionLogPage() {
       )}
 
       {/* Search and Summary Strip */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-          <input
-            type="text"
-            value={patientSearch}
-            onChange={(e) => setPatientSearch(e.target.value)}
-            placeholder="Search Patient ID or Drug Name..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900"
-          />
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          {/* Search Input */}
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+            <input
+              type="text"
+              value={patientSearch}
+              onChange={(e) => setPatientSearch(e.target.value)}
+              placeholder="Search Patient ID, Drug Name, or Type..."
+              className="w-full pl-10 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900"
+            />
+            {patientSearch && (
+              <button
+                type="button"
+                onClick={() => setPatientSearch('')}
+                className="absolute right-2.5 top-2.5 p-0.5 text-slate-400 hover:text-slate-600 rounded-md cursor-pointer"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Date Selector */}
+          <div className="relative w-full sm:w-auto">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full sm:w-auto pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              title="Filter by date"
+            />
+            {selectedDate && (
+              <button
+                type="button"
+                onClick={() => setSelectedDate('')}
+                className="absolute right-2 top-2.5 p-0.5 text-slate-400 hover:text-red-600 rounded-md cursor-pointer"
+                title="Clear date filter (show all dates)"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="text-right text-xs text-slate-500 font-medium">
+        <div className="text-right text-xs text-slate-500 font-medium shrink-0">
           <span className="font-semibold text-slate-700">{filtered.length} Total Records</span> • Total Expenditure:{' '}
           <span className="font-bold text-emerald-700">LKR {grandTotalExpenditure.toFixed(2)}</span>
         </div>
